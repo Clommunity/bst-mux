@@ -24,7 +24,7 @@ import (
 const port string = ":8001"
 const dbfile string = "db_mux_sqlite.db"
 const dockercmd string = "/usr/bin/docker"
-const dksyncthingpath = "/home/syncthing"
+const dksyncthingpath = "/home/syncthing/real"
 const st_uid = 22000
 const st_gid = 100
 const originconfigxml = "/home/syncthing/config.xml"
@@ -217,7 +217,7 @@ func LoginPost(w http.ResponseWriter, req *http.Request) {
 		SetSession(username, password, w)
 		http.Redirect(w, req, "/home", 302)
 	} else {
-		http.Redirect(w, req, "/authfail", 301)
+		http.Redirect(w, req, "/login", 301)
 	}
 }
 
@@ -227,7 +227,7 @@ func SignupPost(w http.ResponseWriter, req *http.Request) {
 	password := req.FormValue("inputPassword")
 	email := req.FormValue("inputEmail")
 
-	if createUser(username, password, email, GetPort(), GetPort(), "/home/syncthing/real/"+username, "user") {
+	if createUser(username, password, email, GetPort(), GetPort(), dksyncthingpath+username, "user") {
 		log.Print("Problem create User")
 	}
 

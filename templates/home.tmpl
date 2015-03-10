@@ -44,7 +44,6 @@
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="/">Main</a></li>
             <li><a href="/logout">Logout</a></li>
           </ul>
         </div><!--/.nav-collapse -->
@@ -54,10 +53,29 @@
     <div class="container">
 
       <div class="starter-template">
-		<h1 id="name"></h1>
-		<p>Status: <label id="status"></label> <span id="btnstatus"></span></p>
-		<p>Gui Port: <label id="guiport"></label> <span id="btngui"></span></p>
-		<p>Listen Port: <label id="listenport"></div></p>		
+	
+	    <table class="table table-striped  table-hover ">
+        <tbody>
+            <tr>
+                <th colspan=3><h1 id="name"></h1></th>
+            </tr>
+            <tr>
+                <td>Status: </td>
+                <td id="status"></td>
+				<td id="btnstatus"></td>
+            </tr>
+            <tr>
+                <td>Gui Port: </td>
+                <td id="guiport"></td>
+				<td id="btngui"></td>
+            </tr>
+            <tr>
+                <td>Listen Port: </td>
+                <td id="listenport"></td>
+				<td></td>
+            </tr>
+        </tbody>
+    </table>	
       </div>
 
     </div><!-- /.container -->
@@ -73,6 +91,12 @@
 
 
     <script>
+	   function serverName(){
+			pathArray = location.href.split( '/' );
+			hostServer = pathArray[2];
+			hostArray = hostServer.split(':')
+			return(hostArray[0])
+		}
        $(function(){
             $.getJSON("/status",function(data){
 				$('#name').text(data.username)
@@ -84,7 +108,7 @@
 					$('#btngui').html("")
 				} else {
 					bstatus = { 'text':'Stop','action':'/stop' }
-					$('#btngui').html("<a href='https://:"+data.guiport+"'><button>Open</button></a>")
+					$('#btngui').html("<a target='_blank' href='https://"+serverName()+":"+data.guiport+"'><button>Open</button></a>")
 				}
 				$('#btnstatus').html("<button>"+bstatus.text+"</button>").click(function(){
 					$.getJSON(bstatus.action, function(data){
