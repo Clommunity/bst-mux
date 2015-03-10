@@ -364,7 +364,7 @@ func StartDocker(w http.ResponseWriter, req *http.Request) map[string]string {
 	}
 	if IsDockerExist(user.Name) {
 		// Docker exist, but not running
-		dockerParameters = append(dockerParameters, "stop", user.Name)
+		dockerParameters = append(dockerParameters, "start", user.Name)
 	}
 	if _, err := os.Stat(user.HomePath + "/config.xml"); err != nil {
 		// Config doesn't exist, PrepareDocker
