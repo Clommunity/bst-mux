@@ -342,7 +342,7 @@ func (user *User) PrepareDocker() bool {
 	// Chown syncthing:users
 	os.Chown(user.HomePath, st_uid, st_gid)
 	// ReplaceConfigXML user.HomePath/config.xml user.Name
-	ReplaceConfigXML(originconfigxml, user.HomePath+"/config.xml", user.Name, hash(user.Password), strconv.Itoa(user.GuiPort), strconv.Itoa(user.ListenPort))
+	ReplaceConfigXML(originconfigxml, user.HomePath+"/config.xml", user.Name, user.Password, strconv.Itoa(user.GuiPort), strconv.Itoa(user.ListenPort))
 	// Chown file
 	os.Chown(user.HomePath+"/config.xml", st_uid, st_gid)
 	return true
@@ -391,6 +391,8 @@ func StopDocker(w http.ResponseWriter, req *http.Request) map[string]string {
 }
 
 func runDocker(parameters []string) []byte {
+	fmt.Printf(dockercmd, parameters)
+	fmt.Println("")
 	out, err := exec.Command(dockercmd, parameters...).Output()
 	if err != nil {
 		fmt.Println("error occured")

@@ -55,8 +55,8 @@
 
       <div class="starter-template">
 		<h1 id="name"></h1>
-		<p>Status: <label id="status"></label><span id="btnstatus"></span></p>
-		<p>Gui Port: <label id="guiport"></label><span id="btngui"></span></p>
+		<p>Status: <label id="status"></label> <span id="btnstatus"></span></p>
+		<p>Gui Port: <label id="guiport"></label> <span id="btngui"></span></p>
 		<p>Listen Port: <label id="listenport"></div></p>		
       </div>
 
@@ -79,7 +79,16 @@
                 $('#status').text(data.result)
 				$('#guiport').text(data.guiport)
 				$('#listenport').text(data.listenport)
-				
+				if (data.result == "Not running") {
+					bstatus = { 'text':'Start','action':'/start' }
+				} else {
+					bstatus = { 'text':'Stop','action':'/stop' }
+				}
+				$('#btnstatus').html("<button>"+bstatus.text+"</button>").click(function(){
+					$.getJSON(bstatus.action, function(data){
+						location.reload();
+					})
+				})
             }
           )
        })
