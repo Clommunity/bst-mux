@@ -39,6 +39,7 @@ type User struct {
 	ListenPort int
 	HomePath   string
 	Group      string
+	Status     string
 }
 
 var dbmap = initDb()
@@ -46,7 +47,7 @@ var cookieHandler = securecookie.New(
 	securecookie.GenerateRandomKey(64),
 	securecookie.GenerateRandomKey(32))
 
-func createUser(name, password string, email string, guiport, listenport int, homepath string, group string) bool {
+func createUser(name, password string, email string, guiport, listenport int, homepath string, group string, status string) bool {
 
 	if !existUserName(name) {
 		hash_password := hash(password)
@@ -59,11 +60,13 @@ func createUser(name, password string, email string, guiport, listenport int, ho
 			ListenPort: listenport,
 			HomePath:   homepath,
 			Group:      group,
+			Status:     status,
 		}
 		err := dbmap.Insert(&user)
 		checkErr(err, "Insert failed")
 		return true
 	} else {
+		log.Println("User exist!")
 		return false
 	}
 }
@@ -213,7 +216,7 @@ func LoginPost(w http.ResponseWriter, req *http.Request) {
 
 	user := getUserName(username)
 
-	if checkHash(user.Password, password) {
+	if checkHash(user.Password, password) && user.Status != "blocked" {
 		SetSession(username, password, w)
 		http.Redirect(w, req, "/home", 302)
 	} else {
@@ -227,7 +230,7 @@ func SignupPost(w http.ResponseWriter, req *http.Request) {
 	password := req.FormValue("inputPassword")
 	email := req.FormValue("inputEmail")
 
-	if createUser(username, password, email, GetPort(), GetPort(), dksyncthingpath+username, "user") {
+	if createUser(username, password, email, GetPort(), GetPort(), dksyncthingpath+username, "user", "blocked") {
 		log.Print("Problem create User")
 	}
 
