@@ -81,8 +81,10 @@
 				$('#listenport').text(data.listenport)
 				if (data.result == "Not running") {
 					bstatus = { 'text':'Start','action':'/start' }
+					$('#btngui').html("")
 				} else {
 					bstatus = { 'text':'Stop','action':'/stop' }
+					$('#btngui').html("<a href='https://:"+data.guiport+"'><button>Open</button></a>")
 				}
 				$('#btnstatus').html("<button>"+bstatus.text+"</button>").click(function(){
 					$.getJSON(bstatus.action, function(data){

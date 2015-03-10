@@ -320,21 +320,19 @@ func IsDockerExist(name string) bool {
 	dockerParameters := []string{"ps", "-a", "-q", "-f", "name=" + name}
 	out := runDocker(dockerParameters)
 	return (string(out) != "")
-} /*
-func RemoveDocker(c *gin.Context) {
+}
+func RemoveDocker(w http.ResponseWriter, req *http.Request) map[string]string {
 	username, _ := GetSessionUserName(req)
 	user := getUserName(username)
-	r := render.New(render.Options
 
 	if IsDockerRunning(user.Name) {
-		r.JSON(w, 500,map[string]string{"result": "This docker is running, stop it before remove"})
-		return
+		return (map[string]string{"result": "This docker is running, stop it before remove"})
 	}
 	dockerParameters := []string{"rm", user.Name}
 	runDocker(dockerParameters)
-	r.JSON(w, 200, map[string]string{"result": "OK"})
+	return (map[string]string{"result": "OK"})
 }
-*/
+
 func (user *User) PrepareDocker() bool {
 
 	// Mkdir user.HomePath
