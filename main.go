@@ -160,6 +160,14 @@ func main() {
 		SimpleAuthenticatedJSON(w, r, DockerStatus)
 	}).Methods("GET")
 
+	router.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
+		SimpleAuthenticatedJSON(w, r, StartDocker)
+	}).Methods("GET")
+
+	router.HandleFunc("/stop", func(w http.ResponseWriter, r *http.Request) {
+		SimpleAuthenticatedJSON(w, r, StopDocker)
+	}).Methods("GET")
+
 	router.Handle("/static/{rest}", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	http.ListenAndServe(port, router)
@@ -326,7 +334,7 @@ func RemoveDocker(c *gin.Context) {
 	runDocker(dockerParameters)
 	r.JSON(w, 200, map[string]string{"result": "OK"})
 }
-
+*/
 func (user *User) PrepareDocker() bool {
 
 	// Mkdir user.HomePath
@@ -344,13 +352,15 @@ func (user *User) CleanDocker() bool {
 	return true
 }
 
-func StartDocker(c *gin.Context) {
+func StartDocker(w http.ResponseWriter, req *http.Request) map[string]string {
+
+	username, _ := GetSessionUserName(req)
+	user := getUserName(username)
+
 	var dockerParameters []string
-	user := getUser(c)
 
 	if IsDockerRunning(user.Name) {
-		c.JSON(500, gin.H{"result": "This docker is running, yet!"})
-		return
+		return (map[string]string{"result": "This docker is running, yet!"})
 	}
 	if IsDockerExist(user.Name) {
 		// Docker exist, but not running
@@ -365,20 +375,21 @@ func StartDocker(c *gin.Context) {
 	}
 
 	out := runDocker(dockerParameters)
-	c.JSON(200, gin.H{"id": string(out)})
+	return (map[string]string{"id": string(out)})
 
 }
 
-func StopDocker(c *gin.Context) {
-	user := getUser(c)
-	// docker stop([]byte, error)
+func StopDocker(w http.ResponseWriter, req *http.Request) map[string]string {
+
+	username, _ := GetSessionUserName(req)
+	user := getUserName(username)
 
 	dockerParameters := []string{"stop", user.Name}
 	out := runDocker(dockerParameters)
-	c.JSON(200, gin.H{"result": string(out)})
+	return (map[string]string{"result": string(out)})
 
 }
-*/
+
 func runDocker(parameters []string) []byte {
 	out, err := exec.Command(dockercmd, parameters...).Output()
 	if err != nil {
