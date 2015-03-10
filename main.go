@@ -24,7 +24,7 @@ import (
 const port string = ":8001"
 const dbfile string = "db_mux_sqlite.db"
 const dockercmd string = "/usr/bin/docker"
-const dksyncthingpath = "/home/syncthing/real"
+const dksyncthingpath = "/home/syncthing/real/"
 const st_uid = 22000
 const st_gid = 100
 const originconfigxml = "/home/syncthing/config.xml"
@@ -89,6 +89,12 @@ func existUserName(name string) bool {
 	exist, err := dbmap.SelectInt("select count(*) from users where Name=?", name)
 	checkErr(err, "Select count failed")
 	return (exist == 1)
+}
+
+func CountUsers() int64 {
+	count, err := dbmap.SelectInt("select count(*) from users")
+	checkErr(err, "Select count failed")
+	return count
 }
 
 func initDb() *gorp.DbMap {
@@ -229,8 +235,14 @@ func SignupPost(w http.ResponseWriter, req *http.Request) {
 	username := req.FormValue("inputUsername")
 	password := req.FormValue("inputPassword")
 	email := req.FormValue("inputEmail")
+	group := "user"
+	status := "blocked"
 
-	if createUser(username, password, email, GetPort(), GetPort(), dksyncthingpath+username, "user", "blocked") {
+	if CountUsers() == 0 {
+		group = "admin"
+		status = ""
+	}
+	if createUser(username, password, email, GetPort(), GetPort(), dksyncthingpath+username, group, status) {
 		log.Print("Problem create User")
 	}
 
