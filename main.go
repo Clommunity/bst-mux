@@ -351,7 +351,7 @@ func ClearSession(response http.ResponseWriter) {
 func UsersList(w http.ResponseWriter, req *http.Request) []byte {
 	ret, _ := json.Marshal(getUsers())
 	log.Printf(string(ret))
-	return []byte(`{"result": "OK"}`)
+	return []byte(ret)
 }
 
 /* Docker */
