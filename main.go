@@ -239,7 +239,7 @@ func SimpleAuthenticatedPage(w http.ResponseWriter, req *http.Request, template 
 
 }
 
-func SimpleAuthenticatedJSON(w http.ResponseWriter, req *http.Request, f func(http.ResponseWriter, *http.Request) map[string]string, group int) {
+func SimpleAuthenticatedJSON(w http.ResponseWriter, req *http.Request, f func(http.ResponseWriter, *http.Request) []byte, group int) {
 
 	user, _, grp := GetSessionUserName(req)
 	r := render.New(render.Options{})
@@ -247,7 +247,7 @@ func SimpleAuthenticatedJSON(w http.ResponseWriter, req *http.Request, f func(ht
 	if user == "" || group > grp {
 		r.JSON(w, http.StatusUnauthorized, map[string]string{"result": "Unauthorized User"})
 	} else {
-		r.JSON(w, http.StatusOK, f(w, req))
+		r.JSON(w, http.StatusOK, string(f(w, req)))
 	}
 }
 
@@ -343,14 +343,14 @@ func ClearSession(response http.ResponseWriter) {
 }
 
 /* Admin */
-func UsersList(w http.ResponseWriter, req *http.Request) map[string]string {
+func UsersList(w http.ResponseWriter, req *http.Request) []byte {
 	ret, _ := json.Marshal(getUsers())
 	log.Printf(string(ret))
-	return (map[string]string{"result": "OK"})
+	return []byte("{'result': 'OK'}")
 }
 
 /* Docker */
-func DockerStatus(w http.ResponseWriter, req *http.Request) map[string]string {
+func DockerStatus(w http.ResponseWriter, req *http.Request) []byte {
 
 	username, _, _ := GetSessionUserName(req)
 	user := getUserName(username)
@@ -360,12 +360,12 @@ func DockerStatus(w http.ResponseWriter, req *http.Request) map[string]string {
 
 	if user.Id == 0 {
 		// User doesn't exist!
-		return (map[string]string{"result": "Error this id doesn't exist."})
+		return []byte("{'result': 'Error this id does not exist.'}")
 	}
 	if IsDockerRunning(user.Name) {
-		return (map[string]string{"result": "Running", "username": user.Name, "guiport": guiport, "listenport": listenport})
+		return []byte("{'result': 'Running', 'username': '" + user.Name + "', 'guiport': '" + guiport + "', 'listenport': '" + listenport + "'}")
 	} else {
-		return (map[string]string{"result": "Not running", "username": user.Name, "guiport": guiport, "listenport": listenport})
+		return []byte("{'result': 'Not running', 'username': '" + user.Name + "', 'guiport': '" + guiport + "', 'listenport': '" + listenport + "'}")
 	}
 }
 func IsDockerRunning(name string) bool {
@@ -379,16 +379,16 @@ func IsDockerExist(name string) bool {
 	out := runDocker(dockerParameters)
 	return (string(out) != "")
 }
-func RemoveDocker(w http.ResponseWriter, req *http.Request) map[string]string {
+func RemoveDocker(w http.ResponseWriter, req *http.Request) []byte {
 	username, _, _ := GetSessionUserName(req)
 	user := getUserName(username)
 
 	if IsDockerRunning(user.Name) {
-		return (map[string]string{"result": "This docker is running, stop it before remove"})
+		return []byte("{'result': 'This docker is running, stop it before remove'}")
 	}
 	dockerParameters := []string{"rm", user.Name}
 	runDocker(dockerParameters)
-	return (map[string]string{"result": "OK"})
+	return []byte("{'result': 'OK'}")
 }
 
 func (user *User) PrepareDocker() bool {
@@ -408,7 +408,7 @@ func (user *User) CleanDocker() bool {
 	return true
 }
 
-func StartDocker(w http.ResponseWriter, req *http.Request) map[string]string {
+func StartDocker(w http.ResponseWriter, req *http.Request) []byte {
 
 	username, _, _ := GetSessionUserName(req)
 	user := getUserName(username)
@@ -416,7 +416,7 @@ func StartDocker(w http.ResponseWriter, req *http.Request) map[string]string {
 	var dockerParameters []string
 
 	if IsDockerRunning(user.Name) {
-		return (map[string]string{"result": "This docker is running, yet!"})
+		//return (map[string]string{"result": "This docker is running, yet!"})
 	}
 	if IsDockerExist(user.Name) {
 		// Docker exist, but not running
@@ -431,18 +431,18 @@ func StartDocker(w http.ResponseWriter, req *http.Request) map[string]string {
 	}
 
 	out := runDocker(dockerParameters)
-	return (map[string]string{"id": string(out)})
+	return []byte("{'id': '" + string(out) + "'}")
 
 }
 
-func StopDocker(w http.ResponseWriter, req *http.Request) map[string]string {
+func StopDocker(w http.ResponseWriter, req *http.Request) []byte {
 
 	username, _, _ := GetSessionUserName(req)
 	user := getUserName(username)
 
 	dockerParameters := []string{"stop", user.Name}
 	out := runDocker(dockerParameters)
-	return (map[string]string{"result": string(out)})
+	return []byte("{'result': '" + string(out) + "'}")
 
 }
 
