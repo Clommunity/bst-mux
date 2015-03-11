@@ -24,7 +24,8 @@ import (
 const port string = ":8001"
 const dbfile string = "db_mux_sqlite.db"
 const dockercmd string = "/usr/bin/docker"
-const dksyncthingpath = "/home/syncthing/real/"
+const dksyncthingpath = "/home/syncthing"
+const hostsyncthingpath = "/home/syncthing/real/"
 const st_uid = 22000
 const st_gid = 100
 const originconfigxml = "/home/syncthing/config.xml"
@@ -272,7 +273,7 @@ func SignupPost(w http.ResponseWriter, req *http.Request) {
 		group = gadmin
 		status = ""
 	}
-	if createUser(username, password, email, GetPort(), GetPort(), dksyncthingpath+username, group, status) {
+	if createUser(username, password, email, GetPort(), GetPort(), hostsyncthingpath+username, group, status) {
 		log.Print("Problem create User")
 	}
 
