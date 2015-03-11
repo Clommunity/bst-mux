@@ -234,7 +234,12 @@ func SignupPost(w http.ResponseWriter, req *http.Request) {
 
 	username := req.FormValue("inputUsername")
 	password := req.FormValue("inputPassword")
+	confirm_password := req.FormValue("inputConfirmPassword")
 	email := req.FormValue("inputEmail")
+
+	if password != confirm_password {
+		http.Redirect(w, req, "/singup", 302)
+	}
 	group := "user"
 	status := "blocked"
 

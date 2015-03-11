@@ -40,7 +40,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">BST-Backup SyncThing</a>
+          <a class="navbar-brand" href="/">BST-Backup SyncThing</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
@@ -64,8 +64,10 @@
  
         <label for="inputPassword" class="sr-only">Password</label>
         <input type="password" id="inputPassword" name="inputPassword" class="form-control" placeholder="Password" required>
-        <div class="checkbox">
-        </div>
+
+        <label for="inputPassword" class="sr-only">Confirm Password</label>
+        <input type="password" id="inputConfirmPassword" name="inputConfirmPassword" class="form-control" placeholder="Confirm" required data-match="#inputPassword">
+
         <button class="btn btn-lg btn-primary btn-block" type="submit">Sign up</button>
       </form>
 
@@ -81,5 +83,18 @@
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="/static/ie10-viewport-bug-workaround.js"></script>
   </body>
+  <script>
+	$('form.form-signin').submit(function () {
+	    var pass = $.trim($('#inputPassword').val());
+		var cpass = $.trim($('#inputConfirmPassword').val());
+
+    if (pass  != cpass ) {
+        alert('Password and Confirm are not iqual.');
+		$('#inputPassword').val("")
+		$('#inputConfirmPassword').val("")
+        return false;
+    }
+});
+  </script>
 </html>
 
