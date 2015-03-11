@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<title>BST</title>
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
-	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.1.0/cyborg/bootstrap.min.css">
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.1.0/flatly/bootstrap.min.css">
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
 </head>
 <script src="http://code.angularjs.org/1.2.10/angular.min.js"></script>
@@ -28,7 +28,7 @@
 			<div class="col-sm-6" ng-show="selected">
 				<h2>{{selected.name}}</h2>
 				<dl class="dl-horizontal">
-					<dt>Author:</dt>
+					<dt>Email:</dt>
 					<dd>{{selected.email}}</dd>
 				</dl>
 			</div>
@@ -46,7 +46,6 @@
 <script>
 	var myapp = new angular.module("myapp", ["ngResource"]);
 
-	// inject the $resource dependency here
 	myapp.controller("MainCtl", ["$scope", "$resource", function($scope, $resource){
 
 		var User = $resource("/admin/user/:id", {id: '@id'}, {});
@@ -68,19 +67,18 @@
 		$scope.list();
 
 		$scope.get = function(idx){
-			User.get({id: $scope.books[idx].id}, function(data){
+			User.get({id: $scope.users[idx].id}, function(data){
 				$scope.selected = data;
 				$scope.selected.idx = idx;
 			});
 		};
 
 		$scope.add = function() {
-			// I was lazy with the user input.
-			var title = prompt("Enter the book's title.");
+			var title = prompt("Enter the user's name.");
 			if(title == null){
 				return;
 			}
-			var author = prompt("Enter the book's author.");
+			var author = prompt("Enter the user's email.");
 			if(author == null){
 				return;
 			}
