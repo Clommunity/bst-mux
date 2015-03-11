@@ -84,7 +84,7 @@ func getUserId(user_id int) User {
 
 func getUserName(name string) User {
 	user := User{}
-	err := dbmap.SelectOne(&user, "select * from users where name=?", name)
+	err := dbmap.SelectOne(&user, "select * from users where Name=?", name)
 	checkErr(err, "SelectOne failed")
 	return user
 }
@@ -99,6 +99,15 @@ func CountUsers() int64 {
 	count, err := dbmap.SelectInt("select count(*) from users")
 	checkErr(err, "Select count failed")
 	return count
+}
+
+func getUsers() []User {
+
+	var users []User
+
+	_, err := dbmap.Select(&users, "select * from users order by Name")
+	checkErr(err, "getUsers Select failed")
+	return users
 }
 
 func initDb() *gorp.DbMap {
@@ -188,11 +197,12 @@ func main() {
 		router.HandleFunc("/admin/user", func(w http.ResponseWriter, r *http.Request) {
 			SimpleAuthenticatedJSON(w, r, UserWrite, gadmin)
 		}).Methods("POST")
+	*/
+	router.HandleFunc("/admin/users", func(w http.ResponseWriter, r *http.Request) {
+		SimpleAuthenticatedJSON(w, r, UsersList, gadmin)
+	}).Methods("GET")
 
-		router.HandleFunc("/admin/users", func(w http.ResponseWriter, r *http.Request) {
-			SimpleAuthenticatedJSON(w, r, UsersRead, gadmin)
-		}).Methods("GET")
-
+	/*
 		router.HandleFunc("/admin/user/{name}", func(w http.ResponseWriter, r *http.Request) {
 			SimpleAuthenticatedJSON(w, r, UsersDelete, gadmin)
 		}).Methods("DELETE")
@@ -241,6 +251,7 @@ func SimpleAuthenticatedJSON(w http.ResponseWriter, req *http.Request, f func(ht
 	}
 }
 
+/* Login */
 func LoginPost(w http.ResponseWriter, req *http.Request) {
 
 	username := req.FormValue("inputUsername")
@@ -339,8 +350,14 @@ func ClearSession(response http.ResponseWriter) {
 	http.SetCookie(response, cookie)
 }
 
-/* Docker */
+/* Admin */
+func UsersList(w http.ResponseWriter, req *http.Request) map[string]string {
+	ret, _ := json.Marshal(getUsers())
+	log.Printf(string(ret))
+	return (map[string]string{"result": "OK"})
+}
 
+/* Docker */
 func DockerStatus(w http.ResponseWriter, req *http.Request) map[string]string {
 
 	username, _, _ := GetSessionUserName(req)
