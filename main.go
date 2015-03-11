@@ -299,14 +299,6 @@ func Logout(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func APIHandler(w http.ResponseWriter, req *http.Request) {
-
-	data, _ := json.Marshal("{'API Test':'Works!'}")
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Write(data)
-
-}
-
 /* Session */
 func GetSessionUserName(request *http.Request) (username string, password string, group int) {
 	username = ""
