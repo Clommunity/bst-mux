@@ -162,19 +162,19 @@ func main() {
 	})
 
 	router.HandleFunc("/home", func(w http.ResponseWriter, r *http.Request) {
-		SimpleAuthenticatedPage(w, r, "home")
+		SimpleAuthenticatedPage(w, r, "home", "user")
 	})
 
 	router.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		SimpleAuthenticatedJSON(w, r, DockerStatus)
+		SimpleAuthenticatedJSON(w, r, DockerStatus, "user")
 	}).Methods("GET")
 
 	router.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
-		SimpleAuthenticatedJSON(w, r, StartDocker)
+		SimpleAuthenticatedJSON(w, r, StartDocker, "user")
 	}).Methods("GET")
 
 	router.HandleFunc("/stop", func(w http.ResponseWriter, r *http.Request) {
-		SimpleAuthenticatedJSON(w, r, StopDocker)
+		SimpleAuthenticatedJSON(w, r, StopDocker, "user")
 	}).Methods("GET")
 
 	router.Handle("/static/{rest}", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
@@ -190,11 +190,11 @@ func SimplePage(w http.ResponseWriter, req *http.Request, template string) {
 
 }
 
-func SimpleAuthenticatedPage(w http.ResponseWriter, req *http.Request, template string) {
+func SimpleAuthenticatedPage(w http.ResponseWriter, req *http.Request, template string, group string) {
 
-	user, _ := GetSessionUserName(req)
+	user, _, grp := GetSessionUserName(req)
 
-	if user == "" {
+	if user == "" || group != grp {
 		http.Redirect(w, req, "/login", 301)
 	}
 
@@ -203,12 +203,12 @@ func SimpleAuthenticatedPage(w http.ResponseWriter, req *http.Request, template 
 
 }
 
-func SimpleAuthenticatedJSON(w http.ResponseWriter, req *http.Request, f func(http.ResponseWriter, *http.Request) map[string]string) {
+func SimpleAuthenticatedJSON(w http.ResponseWriter, req *http.Request, f func(http.ResponseWriter, *http.Request) map[string]string, group string) {
 
-	user, _ := GetSessionUserName(req)
+	user, _, grp := GetSessionUserName(req)
 	r := render.New(render.Options{})
 
-	if user == "" {
+	if user == "" || group != grp {
 		r.JSON(w, http.StatusUnauthorized, map[string]string{"result": "Unauthorized User"})
 	} else {
 		r.JSON(w, http.StatusOK, f(w, req))
@@ -223,7 +223,7 @@ func LoginPost(w http.ResponseWriter, req *http.Request) {
 	user := getUserName(username)
 
 	if checkHash(user.Password, password) && user.Status != "blocked" {
-		SetSession(username, password, w)
+		SetSession(username, password, user.Group, w)
 		http.Redirect(w, req, "/home", 302)
 	} else {
 		http.Redirect(w, req, "/login", 301)
@@ -271,24 +271,27 @@ func APIHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 /* Session */
-func GetSessionUserName(request *http.Request) (username string, password string) {
+func GetSessionUserName(request *http.Request) (username string, password string, group string) {
 	username = ""
 	password = ""
+	group = ""
 
 	if cookie, err := request.Cookie("session"); err == nil {
 		cookieValue := make(map[string]string)
 		if err = cookieHandler.Decode("session", cookie.Value, &cookieValue); err == nil {
 			username = cookieValue["name"]
 			password = cookieValue["password"]
+			group = cookieValue["group"]
 		}
 	}
-	return username, password
+	return username, password, group
 }
 
-func SetSession(userName string, password string, response http.ResponseWriter) {
+func SetSession(userName string, password string, group string, response http.ResponseWriter) {
 	value := map[string]string{
 		"name":     userName,
 		"password": password,
+		"group":    group,
 	}
 	if encoded, err := cookieHandler.Encode("session", value); err == nil {
 		cookie := &http.Cookie{
@@ -314,7 +317,7 @@ func ClearSession(response http.ResponseWriter) {
 
 func DockerStatus(w http.ResponseWriter, req *http.Request) map[string]string {
 
-	username, _ := GetSessionUserName(req)
+	username, _, _ := GetSessionUserName(req)
 	user := getUserName(username)
 
 	guiport := strconv.Itoa(user.GuiPort)
@@ -342,7 +345,7 @@ func IsDockerExist(name string) bool {
 	return (string(out) != "")
 }
 func RemoveDocker(w http.ResponseWriter, req *http.Request) map[string]string {
-	username, _ := GetSessionUserName(req)
+	username, _, _ := GetSessionUserName(req)
 	user := getUserName(username)
 
 	if IsDockerRunning(user.Name) {
@@ -372,7 +375,7 @@ func (user *User) CleanDocker() bool {
 
 func StartDocker(w http.ResponseWriter, req *http.Request) map[string]string {
 
-	username, _ := GetSessionUserName(req)
+	username, _, _ := GetSessionUserName(req)
 	user := getUserName(username)
 
 	var dockerParameters []string
@@ -399,7 +402,7 @@ func StartDocker(w http.ResponseWriter, req *http.Request) map[string]string {
 
 func StopDocker(w http.ResponseWriter, req *http.Request) map[string]string {
 
-	username, _ := GetSessionUserName(req)
+	username, _, _ := GetSessionUserName(req)
 	user := getUserName(username)
 
 	dockerParameters := []string{"stop", user.Name}
