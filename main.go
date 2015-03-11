@@ -28,6 +28,9 @@ const dksyncthingpath = "/home/syncthing/real/"
 const st_uid = 22000
 const st_gid = 100
 const originconfigxml = "/home/syncthing/config.xml"
+const gnull = 0
+const guser = 1
+const gadmin = 100
 
 type User struct {
 	Id         int64 `db:"user_id"`
@@ -38,7 +41,7 @@ type User struct {
 	GuiPort    int
 	ListenPort int
 	HomePath   string
-	Group      string
+	Group      int
 	Status     string
 }
 
@@ -47,7 +50,7 @@ var cookieHandler = securecookie.New(
 	securecookie.GenerateRandomKey(64),
 	securecookie.GenerateRandomKey(32))
 
-func createUser(name, password string, email string, guiport, listenport int, homepath string, group string, status string) bool {
+func createUser(name, password string, email string, guiport, listenport int, homepath string, group int, status string) bool {
 
 	if !existUserName(name) {
 		hash_password := hash(password)
@@ -162,20 +165,42 @@ func main() {
 	})
 
 	router.HandleFunc("/home", func(w http.ResponseWriter, r *http.Request) {
-		SimpleAuthenticatedPage(w, r, "home", "user")
+		SimpleAuthenticatedPage(w, r, "home", guser)
 	})
 
 	router.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		SimpleAuthenticatedJSON(w, r, DockerStatus, "user")
+		SimpleAuthenticatedJSON(w, r, DockerStatus, guser)
 	}).Methods("GET")
 
 	router.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
-		SimpleAuthenticatedJSON(w, r, StartDocker, "user")
+		SimpleAuthenticatedJSON(w, r, StartDocker, guser)
 	}).Methods("GET")
 
 	router.HandleFunc("/stop", func(w http.ResponseWriter, r *http.Request) {
-		SimpleAuthenticatedJSON(w, r, StopDocker, "user")
+		SimpleAuthenticatedJSON(w, r, StopDocker, guser)
 	}).Methods("GET")
+	/*
+		router.HandleFunc("/admin/user/{name}", func(w http.ResponseWriter, r *http.Request) {
+			SimpleAuthenticatedJSON(w, r, UserRead, gadmin)
+		}).Methods("GET")
+
+		router.HandleFunc("/admin/user", func(w http.ResponseWriter, r *http.Request) {
+			SimpleAuthenticatedJSON(w, r, UserWrite, gadmin)
+		}).Methods("POST")
+
+		router.HandleFunc("/admin/users", func(w http.ResponseWriter, r *http.Request) {
+			SimpleAuthenticatedJSON(w, r, UsersRead, gadmin)
+		}).Methods("GET")
+
+		router.HandleFunc("/admin/user/{name}", func(w http.ResponseWriter, r *http.Request) {
+			SimpleAuthenticatedJSON(w, r, UsersDelete, gadmin)
+		}).Methods("DELETE")
+
+		router.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
+			SimpleAuthenticatedPage(w, r, "admin", gadmin)
+		}).Methods("GET")
+
+	*/
 
 	router.Handle("/static/{rest}", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
@@ -190,11 +215,11 @@ func SimplePage(w http.ResponseWriter, req *http.Request, template string) {
 
 }
 
-func SimpleAuthenticatedPage(w http.ResponseWriter, req *http.Request, template string, group string) {
+func SimpleAuthenticatedPage(w http.ResponseWriter, req *http.Request, template string, group int) {
 
 	user, _, grp := GetSessionUserName(req)
 
-	if user == "" || group != grp {
+	if user == "" || group > grp {
 		http.Redirect(w, req, "/login", 301)
 	}
 
@@ -203,12 +228,12 @@ func SimpleAuthenticatedPage(w http.ResponseWriter, req *http.Request, template 
 
 }
 
-func SimpleAuthenticatedJSON(w http.ResponseWriter, req *http.Request, f func(http.ResponseWriter, *http.Request) map[string]string, group string) {
+func SimpleAuthenticatedJSON(w http.ResponseWriter, req *http.Request, f func(http.ResponseWriter, *http.Request) map[string]string, group int) {
 
 	user, _, grp := GetSessionUserName(req)
 	r := render.New(render.Options{})
 
-	if user == "" || group != grp {
+	if user == "" || group > grp {
 		r.JSON(w, http.StatusUnauthorized, map[string]string{"result": "Unauthorized User"})
 	} else {
 		r.JSON(w, http.StatusOK, f(w, req))
@@ -240,11 +265,11 @@ func SignupPost(w http.ResponseWriter, req *http.Request) {
 	if password != confirm_password {
 		http.Redirect(w, req, "/singup", 302)
 	}
-	group := "user"
+	group := guser
 	status := "blocked"
 
 	if CountUsers() == 0 {
-		group = "admin"
+		group = gadmin
 		status = ""
 	}
 	if createUser(username, password, email, GetPort(), GetPort(), dksyncthingpath+username, group, status) {
@@ -271,27 +296,27 @@ func APIHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 /* Session */
-func GetSessionUserName(request *http.Request) (username string, password string, group string) {
+func GetSessionUserName(request *http.Request) (username string, password string, group int) {
 	username = ""
 	password = ""
-	group = ""
+	group = gnull
 
 	if cookie, err := request.Cookie("session"); err == nil {
 		cookieValue := make(map[string]string)
 		if err = cookieHandler.Decode("session", cookie.Value, &cookieValue); err == nil {
 			username = cookieValue["name"]
 			password = cookieValue["password"]
-			group = cookieValue["group"]
+			group, _ = strconv.Atoi(cookieValue["group"])
 		}
 	}
 	return username, password, group
 }
 
-func SetSession(userName string, password string, group string, response http.ResponseWriter) {
+func SetSession(userName string, password string, group int, response http.ResponseWriter) {
 	value := map[string]string{
 		"name":     userName,
 		"password": password,
-		"group":    group,
+		"group":    strconv.Itoa(group),
 	}
 	if encoded, err := cookieHandler.Encode("session", value); err == nil {
 		cookie := &http.Cookie{
