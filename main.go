@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/securecookie"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/unrolled/render"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -32,6 +33,7 @@ const originconfigxml = "/home/syncthing/config.xml"
 const gnull = 0
 const guser = 1
 const gadmin = 100
+const checkAuth = false
 
 type User struct {
 	Id         int64 `db:"user_id"`
@@ -102,12 +104,26 @@ func CountUsers() int64 {
 }
 
 func getUsers() []User {
-
 	var users []User
 
 	_, err := dbmap.Select(&users, "select * from users order by Name")
 	checkErr(err, "getUsers Select failed")
 	return users
+}
+
+func parseUserRequest(r *http.Request) (User, error) {
+	data, e := ioutil.ReadAll(r.Body)
+	if e != nil {
+		return User{}, e
+	}
+
+	var payload User
+	e = json.Unmarshal(data, &payload)
+	if e != nil {
+		return User{}, e
+	}
+
+	return payload, nil
 }
 
 func initDb() *gorp.DbMap {
@@ -189,29 +205,30 @@ func main() {
 	router.HandleFunc("/stop", func(w http.ResponseWriter, r *http.Request) {
 		SimpleAuthenticatedJSON(w, r, StopDocker, guser)
 	}).Methods("GET")
-	/*
-		router.HandleFunc("/admin/user/{name}", func(w http.ResponseWriter, r *http.Request) {
-			SimpleAuthenticatedJSON(w, r, UserRead, gadmin)
-		}).Methods("GET")
 
-		router.HandleFunc("/admin/user", func(w http.ResponseWriter, r *http.Request) {
-			SimpleAuthenticatedJSON(w, r, UserWrite, gadmin)
-		}).Methods("POST")
-	*/
-	router.HandleFunc("/admin/users", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/admin/user", func(w http.ResponseWriter, r *http.Request) {
 		SimpleAuthenticatedJSON(w, r, UsersList, gadmin)
 	}).Methods("GET")
 
-	/*
-		router.HandleFunc("/admin/user/{name}", func(w http.ResponseWriter, r *http.Request) {
-			SimpleAuthenticatedJSON(w, r, UsersDelete, gadmin)
-		}).Methods("DELETE")
+	router.HandleFunc("/admin/user", func(w http.ResponseWriter, r *http.Request) {
+		SimpleAuthenticatedJSON(w, r, UserAdd, gadmin)
+	}).Methods("POST")
 
-		router.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
-			SimpleAuthenticatedPage(w, r, "admin", gadmin)
-		}).Methods("GET")
+	router.HandleFunc("/admin/user/{name}", func(w http.ResponseWriter, r *http.Request) {
+		SimpleAuthenticatedJSON(w, r, UserRead, gadmin)
+	}).Methods("GET")
 
-	*/
+	router.HandleFunc("/admin/user/{name}", func(w http.ResponseWriter, r *http.Request) {
+		SimpleAuthenticatedJSON(w, r, UserUpdate, gadmin)
+	}).Methods("POST")
+
+	router.HandleFunc("/admin/user/{name}", func(w http.ResponseWriter, r *http.Request) {
+		SimpleAuthenticatedJSON(w, r, UserDelete, gadmin)
+	}).Methods("DELETE")
+
+	router.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
+		SimpleAuthenticatedPage(w, r, "admin", gadmin)
+	}).Methods("GET")
 
 	router.Handle("/static/{rest}", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
@@ -221,7 +238,7 @@ func main() {
 
 func SimplePage(w http.ResponseWriter, req *http.Request, template string) {
 
-	r := render.New(render.Options{})
+	r := render.New(render.Options{Delims: render.Delims{"{{{", "}}}"}})
 	r.HTML(w, http.StatusOK, template, nil)
 
 }
@@ -230,11 +247,11 @@ func SimpleAuthenticatedPage(w http.ResponseWriter, req *http.Request, template 
 
 	user, _, grp := GetSessionUserName(req)
 
-	if user == "" || group > grp {
+	if checkAuth == true && (user == "" || group > grp) {
 		http.Redirect(w, req, "/login", 301)
 	}
 
-	r := render.New(render.Options{})
+	r := render.New(render.Options{Delims: render.Delims{"{{{", "}}}"}})
 	r.HTML(w, http.StatusOK, template, nil)
 
 }
@@ -242,9 +259,9 @@ func SimpleAuthenticatedPage(w http.ResponseWriter, req *http.Request, template 
 func SimpleAuthenticatedJSON(w http.ResponseWriter, req *http.Request, f func(http.ResponseWriter, *http.Request) []byte, group int) {
 
 	user, _, grp := GetSessionUserName(req)
-	r := render.New(render.Options{})
+	r := render.New(render.Options{Delims: render.Delims{"{{{", "}}}"}})
 
-	if user == "" || group > grp {
+	if checkAuth == true && (user == "" || group > grp) {
 		r.JSON(w, http.StatusUnauthorized, map[string]string{"result": "Unauthorized User"})
 	} else {
 		var dat interface{}
@@ -350,8 +367,58 @@ func ClearSession(response http.ResponseWriter) {
 /* Admin */
 func UsersList(w http.ResponseWriter, req *http.Request) []byte {
 	ret, _ := json.Marshal(getUsers())
-	log.Printf(string(ret))
 	return []byte(ret)
+}
+
+func UserAdd(w http.ResponseWriter, req *http.Request) []byte {
+	// TODO
+	payload, _ := parseUserRequest(req)
+	fmt.Println("add: ", payload)
+	// Get payload and fill empty fields...
+	// Execute add
+	return []byte(`{}`)
+}
+
+func UserRead(w http.ResponseWriter, req *http.Request) []byte {
+	vars := mux.Vars(req)
+	name := vars["name"]
+
+	user := getUserName(name)
+
+	if user.Name != name {
+		return []byte(`{}`)
+	}
+	ret, _ := json.Marshal(user)
+	return []byte(ret)
+}
+
+func UserUpdate(w http.ResponseWriter, req *http.Request) []byte {
+	// TODO
+	vars := mux.Vars(req)
+	name := vars["name"]
+
+	user := getUserName(name)
+	payload, _ := parseUserRequest(req)
+	fmt.Println("user: ", user)
+	fmt.Println("update: ", payload)
+	// Get user, and compare to payload...
+	// Execute update!
+	return []byte(`{}`)
+}
+
+func UserDelete(w http.ResponseWriter, req *http.Request) []byte {
+	// TODO
+	vars := mux.Vars(req)
+	name := vars["name"]
+
+	user := getUserName(name)
+	log.Println(user)
+	if user.Id != 0 {
+		user.Remove()
+		return []byte(`{"result":"OK"}`)
+	} else {
+		return []byte(`{"result":"This user does not exist."}`)
+	}
 }
 
 /* Docker */
@@ -395,24 +462,6 @@ func RemoveDocker(w http.ResponseWriter, req *http.Request) []byte {
 	runDocker(dockerParameters)
 	return []byte(`{"result": "OK"}`)
 }
-
-func (user *User) PrepareDocker() bool {
-
-	// Mkdir user.HomePath
-	os.Mkdir(user.HomePath, 0750)
-	// Chown syncthing:users
-	os.Chown(user.HomePath, st_uid, st_gid)
-	// ReplaceConfigXML user.HomePath/config.xml user.Name
-	ReplaceConfigXML(originconfigxml, user.HomePath+"/config.xml", user.Name, user.Password, strconv.Itoa(user.GuiPort), strconv.Itoa(user.ListenPort))
-	// Chown file
-	os.Chown(user.HomePath+"/config.xml", st_uid, st_gid)
-	return true
-}
-func (user *User) CleanDocker() bool {
-	// Remove user.HomePath
-	return true
-}
-
 func StartDocker(w http.ResponseWriter, req *http.Request) []byte {
 
 	username, _, _ := GetSessionUserName(req)
@@ -461,6 +510,30 @@ func runDocker(parameters []string) []byte {
 	}
 	return out
 }
+
+/* User Methods */
+func (user *User) PrepareDocker() bool {
+
+	// Mkdir user.HomePath
+	os.Mkdir(user.HomePath, 0750)
+	// Chown syncthing:users
+	os.Chown(user.HomePath, st_uid, st_gid)
+	// ReplaceConfigXML user.HomePath/config.xml user.Name
+	ReplaceConfigXML(originconfigxml, user.HomePath+"/config.xml", user.Name, user.Password, strconv.Itoa(user.GuiPort), strconv.Itoa(user.ListenPort))
+	// Chown file
+	os.Chown(user.HomePath+"/config.xml", st_uid, st_gid)
+	return true
+}
+func (user *User) CleanDocker() bool {
+	// Remove user.HomePath
+	return true
+}
+
+func (user *User) Remove() bool {
+	// Remove user.HomePath
+	return true
+}
+
 func GetPort() int {
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
 	if err != nil {

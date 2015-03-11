@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en" ng-app="myapp">
+<head>
+	<meta charset="UTF-8">
+	<title>BST</title>
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.1.0/cyborg/bootstrap.min.css">
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+</head>
+<script src="http://code.angularjs.org/1.2.10/angular.min.js"></script>
+<body ng-controller="MainCtl">
+	<div class="jumbotron">
+		<button class="btn btn-primary pull-right" ng-click="add()">
+			<i class="fa fa-plus"></i> Add user
+		</button>
+		<h1>Administrative System</h1>
+	</div>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-sm-3 well">
+				<h3>Users</h3>
+				<ul class="nav nav-pills nav-stacked">
+					<li ng-class="{active: b.name == selected.name}" ng-repeat="b in users">
+						<a href="" ng-click="get($index)">{{b.name}}</a>
+					</li>
+				</ul>
+			</div>
+			<div class="col-sm-6" ng-show="selected">
+				<h2>{{selected.name}}</h2>
+				<dl class="dl-horizontal">
+					<dt>Author:</dt>
+					<dd>{{selected.email}}</dd>
+				</dl>
+			</div>
+			<div class="col-sm-3" ng-show="selected">
+				<button class="btn btn-primary form-control" ng-click="update(selected.idx)">
+					<i class="fa fa-pencil"></i> Update this User
+				</button>
+				<button class="btn btn-danger form-control" ng-click="remove(selected.idx)">
+					<i class="fa fa-trash-o"></i> Remove this User
+				</button>
+			</div>
+		</div>
+	</div>
+<script src="http://code.angularjs.org/1.2.10/angular-resource.min.js"></script>
+<script>
+	var myapp = new angular.module("myapp", ["ngResource"]);
+
+	// inject the $resource dependency here
+	myapp.controller("MainCtl", ["$scope", "$resource", function($scope, $resource){
+
+		var User = $resource("/admin/user/:id", {id: '@id'}, {});
+
+		$scope.selected = null;
+
+		$scope.list = function(idx){
+			User.query(function(data){
+				$scope.users = data;
+				if(idx != undefined) {
+					$scope.selected = $scope.users[idx];
+					$scope.selected.idx = idx;
+				}
+			}, function(error){
+				alert(error.data);
+			});
+		};
+
+		$scope.list();
+
+		$scope.get = function(idx){
+			User.get({id: $scope.books[idx].id}, function(data){
+				$scope.selected = data;
+				$scope.selected.idx = idx;
+			});
+		};
+
+		$scope.add = function() {
+			// I was lazy with the user input.
+			var title = prompt("Enter the book's title.");
+			if(title == null){
+				return;
+			}
+			var author = prompt("Enter the book's author.");
+			if(author == null){
+				return;
+			}
+			// Creating a blank book object means you can still $save
+			var newUser = new User();
+			newUser.name = name;
+			newUser.email = email;
+			newUser.$save();
+
+			$scope.list();
+		};
+
+		$scope.update = function(idx) {
+			var user = $scope.users[idx];
+			var name = prompt("Enter a new name", user.title);
+			if(name == null) {
+				return;
+			}
+			var email = prompt("Enter a new email", user.email);
+			if(email == null) {
+				return;
+			}
+			user.name = name;
+			user.email = email;
+			user.$save();
+
+			$scope.list(idx);
+		};
+
+		$scope.remove = function(idx){
+			$scope.users[idx].$delete();
+			$scope.selected = null;
+			$scope.list();
+		};
+	}]);
+</script>
+</body>
+</html>
