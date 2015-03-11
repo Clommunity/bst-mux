@@ -247,7 +247,8 @@ func SimpleAuthenticatedJSON(w http.ResponseWriter, req *http.Request, f func(ht
 	if user == "" || group > grp {
 		r.JSON(w, http.StatusUnauthorized, map[string]string{"result": "Unauthorized User"})
 	} else {
-		r.JSON(w, http.StatusOK, string(f(w, req)))
+		rtn := f(w, req)
+		r.JSON(w, http.StatusOK, &rtn)
 	}
 }
 
@@ -363,9 +364,9 @@ func DockerStatus(w http.ResponseWriter, req *http.Request) []byte {
 		return []byte("{'result': 'Error this id does not exist.'}")
 	}
 	if IsDockerRunning(user.Name) {
-		return []byte("{'result': 'Running', 'username': '" + user.Name + "', 'guiport': '" + guiport + "', 'listenport': '" + listenport + "'}")
+		return []byte(`{"result": "Running", "username": "` + user.Name + `", "guiport": "` + guiport + `", "listenport": '"` + listenport + `"}`)
 	} else {
-		return []byte("{'result': 'Not running', 'username': '" + user.Name + "', 'guiport': '" + guiport + "', 'listenport': '" + listenport + "'}")
+		return []byte(`{"result": "Not running", "username": "` + user.Name + `", "guiport": "` + guiport + `", "listenport": '"` + listenport + `"}`)
 	}
 }
 func IsDockerRunning(name string) bool {
