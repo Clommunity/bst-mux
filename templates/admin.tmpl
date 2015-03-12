@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" ng-app="myapp">
+<html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<title>BST</title>
@@ -8,16 +8,27 @@
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
 </head>
 <script src="http://code.angularjs.org/1.2.10/angular.min.js"></script>
-<body ng-controller="MainCtl">
-	<div class="jumbotron">
-		<a href="/logout">
-		<button class="btn pull-right">Logout</button>
-		</a>
-		<button class="btn btn-primary pull-right" ng-click="add()">
-			<i class="fa fa-plus"></i> Add user
-		</button>
-		<h1>Administrative System</h1>
-	</div>
+<script src="http://code.angularjs.org/1.2.10/angular-resource.min.js"></script>
+<script src="http://code.angularjs.org/1.2.10/angular-route.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/restangular/1.4.0/restangular.min.js"></script>
+
+<body>
+	<div ng-app="project">
+		<div class="jumbotron">
+			<a href="/logout">
+			<button class="btn pull-right">Logout</button>
+			</a>
+			<a href="#/new">
+			<button class="btn btn-primary pull-right">
+				<i class="fa fa-plus"></i> Add user
+			</button>
+			</a>
+			<h1>Administrative System</h1>
+		</div>
+	
+		<div ng-view></div>
+		
+	<script type="text/ng-template" id="list.html">
 	<div class="container-fluid">
 		<div class="row">
 			<div class="col-sm-3 well">
@@ -28,7 +39,7 @@
 					</li>
 				</ul>
 			</div>
-			<div class="col-sm-6" ng-show="selected" ng-hide="edit">
+			<div class="col-sm-6">
 				<h2>{{selected.Name}}</h2>
 				<dl class="dl-horizontal">
 					<dt>Email:</dt>
@@ -55,7 +66,7 @@
 					<dd>{{selected.Status}}</dd>
 				</dl>
 			</div>
-			<div class="col-sm-3" ng-show="selected" ng-hide="edit">
+			<div class="col-sm-3">
 				<button class="btn btn-primary form-control" ng-click="update(selected.idx)">
 					<i class="fa fa-pencil"></i> Update this User
 				</button>
@@ -63,7 +74,16 @@
 					<i class="fa fa-trash-o"></i> Remove this User
 				</button>
 			</div>
-			<div class="col-sm-6 ng-hide" ng-show="edit" ng-hide="selected">
+		</div>
+	</div>
+	</script>
+
+	<script type="text/ng-template" id="detail.html">
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-sm-3 well">
+			</div>				
+			<div class="col-sm-6 ng-hide">
 				<form>
 					<fieldset>
 						<div class='modal-body'>
@@ -92,78 +112,82 @@
 					</fieldset>
 				</form>		
 			</div>
+			<div class="col-sm-3">
+			</div>
 		</div>
 	</div>
-<script src="http://code.angularjs.org/1.2.10/angular-resource.min.js"></script>
+	</script>
+
 <script>
-	var myapp = new angular.module("myapp", ["ngResource"]);
+angular.module('user', ['restangular', 'ngRoute']).
+  config(function($routeProvider, RestangularProvider) {
+    $routeProvider.
+      when('/', {
+        controller:ListCtrl, 
+        templateUrl:'list.html'
+      }).
+      when('/edit/:projectId', {
+        controller:EditCtrl, 
+        templateUrl:'detail.html',
+        resolve: {
+          user: function(Restangular, $route){
+            return Restangular.one('users', $route.current.params.userId).get();
+          }
+        }
+      }).
+      when('/new', {controller:CreateCtrl, templateUrl:'detail.html'}).
+      otherwise({redirectTo:'/'});
+      
+      RestangularProvider.setBaseUrl('/admin');
+      RestangularProvider.setRestangularFields({
+        id: '_id.$oid'
+      });
+      
+      RestangularProvider.setRequestInterceptor(function(elem, operation, what) {
+        
+        if (operation === 'put') {
+          elem._id = undefined;
+          return elem;
+        }
+        return elem;
+      })
+  });
 
-	myapp.controller("MainCtl", ["$scope", "$resource", function($scope, $resource){
 
-		var User = $resource("/admin/user/:name", {name: '@name'}, {});
+function ListCtrl($scope, Restangular) {
+   $scope.users = Restangular.all("users").getList().$object;
+}
 
-		$scope.selected = null;
-		$scope.edit = null;
 
-		$scope.list = function(idx){
-			User.query(function(data){
-				console.log(data)
-				$scope.users = data;
-				if(idx != undefined) {
-					$scope.selected = $scope.users[idx];
-					$scope.selected.idx = idx;
-				}
-			}, function(error){
-				alert(error.data);
-			});
-		};
+function CreateCtrl($scope, $location, Restangular) {
+  $scope.save = function() {
+    Restangular.all('projects').post($scope.project).then(function(project) {
+      $location.path('/list');
+    });
+  }
+}
 
-		$scope.list();
+function EditCtrl($scope, $location, Restangular, project) {
+  var original = project;
+  $scope.project = Restangular.copy(original);
+  
 
-		$scope.get = function(idx){
-			User.get({name: $scope.users[idx].Name}, function(data){
-				$scope.selected = data;
-				$scope.selected.idx = idx;
-			});
-		};
+  $scope.isClean = function() {
+    return angular.equals(original, $scope.project);
+  }
 
-		$scope.add = function() {
-			var title = prompt("Enter the user's name.");
-			if(title == null){
-				return;
-			}
-			var author = prompt("Enter the user's email.");
-			if(author == null){
-				return;
-			}
-			// Creating a blank book object means you can still $save
-			var newUser = new User();
-			newUser.name = name;
-			newUser.email = email;
-			newUser.$save();
+  $scope.destroy = function() {
+    original.remove().then(function() {
+      $location.path('/list');
+    });
+  };
 
-			$scope.list();
-		};
-
-		$scope.update = function(idx) {
-			$scope.selected = null
-			var user = $scope.users[idx];
-			$scope.edit = user
-			/*
-			user.name = name;
-			user.email = email;
-			user.$save();
-			*/
-			//$scope.list(idx);
-		};
-
-		$scope.remove = function(idx){
-			User.remove({name: $scope.users[idx].Name}, function(data){
-				$scope.selected = null;
-				$scope.list();
-			})
-		};
-	}]);
+  $scope.save = function() {
+    $scope.project.put().then(function() {
+      $location.path('/');
+    });
+  };
+}
 </script>
 </body>
 </html>
