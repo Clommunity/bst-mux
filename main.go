@@ -88,9 +88,9 @@ func updateUser(u User) bool {
 		return false
 	}
 }
-func (u *User) Remove() bool {
-	if existUserName(u.Name) && u.Id != 0 {
-		_, err := dbmap.Delete(&u)
+func (user *User) Remove() bool {
+	if existUserName(user.Name) {
+		err := deleteUser(user.Name)
 		checkErr(err, "Delete failed")
 		return true
 	} else {
@@ -132,6 +132,10 @@ func getUsers() []User {
 	return users
 }
 
+func deleteUser(name string) error {
+	_, err := dbmap.Exec("delete from users where Name=?", name)
+	return err
+}
 func parseUserRequest(r *http.Request) (User, error) {
 	data, e := ioutil.ReadAll(r.Body)
 	if e != nil {

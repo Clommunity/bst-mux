@@ -167,9 +167,11 @@
 		};
 
 		$scope.remove = function(idx){
-			$scope.users[idx].$delete();
-			$scope.selected = null;
-			$scope.list();
+			console.log(idx)
+			User.remove({name: $scope.users[idx].Name}, function(data){
+				$scope.selected = null;
+				$scope.list();
+			})
 		};
 	}]);
 </script>
