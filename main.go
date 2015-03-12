@@ -70,10 +70,10 @@ func createUser(name, password string, email string, guiport, listenport int, ho
 		}
 		err := dbmap.Insert(&user)
 		checkErr(err, "Insert failed")
-		handlelog("Create user ['", user.Name, " ':", user.Group, "]")
+		programlog("Create user ['" + user.Name + " ':" + strconv.Itoa(user.Group) + "]")
 		return true
 	} else {
-		handlelog("User exist!")
+		programlog("User exist!")
 		return false
 	}
 }
