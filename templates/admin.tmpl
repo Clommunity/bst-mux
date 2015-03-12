@@ -28,7 +28,7 @@
 					</li>
 				</ul>
 			</div>
-			<div class="col-sm-6" ng-show="selected">
+			<div class="col-sm-6" ng-show="selected" ng-hide="edit">
 				<h2>{{selected.Name}}</h2>
 				<dl class="dl-horizontal">
 					<dt>Email:</dt>
@@ -55,7 +55,7 @@
 					<dd>{{selected.Status}}</dd>
 				</dl>
 			</div>
-			<div class="col-sm-3" ng-show="selected">
+			<div class="col-sm-3" ng-show="selected" ng-hide="edit">
 				<button class="btn btn-primary form-control" ng-click="update(selected.idx)">
 					<i class="fa fa-pencil"></i> Update this User
 				</button>
@@ -63,40 +63,35 @@
 					<i class="fa fa-trash-o"></i> Remove this User
 				</button>
 			</div>
-		</div>
-		<div class="modal hide fade" id="editModal" role='dialog'>
-			<div class='modal-header'>
-				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-				<h3 ng-hide='newUser'>Edit User: {{selected.Name}}</h3>
-				<h3 ng-show='newUser'>New User</h3>
-			</div>
-			<form>
-				<fieldset>
-					<div class='modal-body'>
-						<label>Name</label>
-						<input type='text' ng-model="selected.Name"/>
-						<label>Email</label>
-						<input type='text' ng-model="selected.Email"/>
-						<label>GUI Port</label>
-						<input type='text' ng-model="selected.Guiport"/>
-						<label>Listen Port</label>
-						<input type='text' ng-model="selected.Listenport"/>
-						<label>Group</label>
-						<input type='text' ng-model="selected.Group"/>
-						<label>Status</label>
-						<input type='text' ng-model="selected.Status"/>
-						<label>Options</label>
-						<div ng-repeat="vo in selected.voteoptions">
-							<input type='text' ng-model="vo.name"/>
-							<i class="icon-trash" ng-click='removeVoteOption(vo)'></i>
+			<div class="col-sm-6 ng-hide" ng-show="edit" ng-hide="selected">
+				<form>
+					<fieldset>
+						<div class='modal-body'>
+							<label>Name</label>
+							<input type='text' ng-model="selected.Name"/>
+							<label>Email</label>
+							<input type='text' ng-model="selected.Email"/>
+							<label>GUI Port</label>
+							<input type='text' ng-model="selected.Guiport"/>
+							<label>Listen Port</label>
+							<input type='text' ng-model="selected.Listenport"/>
+							<label>Group</label>
+							<input type='text' ng-model="selected.Group"/>
+							<label>Status</label>
+							<input type='text' ng-model="selected.Status"/>
+							<label>Options</label>
+							<div ng-repeat="vo in selected.voteoptions">
+								<input type='text' ng-model="vo.name"/>
+								<i class="icon-trash" ng-click='removeVoteOption(vo)'></i>
+							</div>
 						</div>
-					</div>
-					<div class='modal-footer'>
-						<button type='submit' class="btn btn-danger" data-dismiss="modal" ng-click="delete()">Delete</button>
-						<button type='submit' class="btn btn-primary" data-dismiss="modal" ng-click="save()">Save</button>
-					</div>
-				</fieldset>
-			</form>		
+						<div class='modal-footer'>
+							<button type='submit' class="btn btn-danger" data-dismiss="modal" ng-click="delete()">Delete</button>
+							<button type='submit' class="btn btn-primary" data-dismiss="modal" ng-click="save()">Save</button>
+						</div>
+					</fieldset>
+				</form>		
+			</div>
 		</div>
 	</div>
 <script src="http://code.angularjs.org/1.2.10/angular-resource.min.js"></script>
@@ -108,6 +103,7 @@
 		var User = $resource("/admin/user/:name", {name: '@name'}, {});
 
 		$scope.selected = null;
+		$scope.edit = null;
 
 		$scope.list = function(idx){
 			User.query(function(data){
@@ -150,24 +146,18 @@
 		};
 
 		$scope.update = function(idx) {
+			$scope.selected = null
 			var user = $scope.users[idx];
-			var name = prompt("Enter a new name", user.title);
-			if(name == null) {
-				return;
-			}
-			var email = prompt("Enter a new email", user.email);
-			if(email == null) {
-				return;
-			}
+			$scope.edit = user
+			/*
 			user.name = name;
 			user.email = email;
 			user.$save();
-
-			$scope.list(idx);
+			*/
+			//$scope.list(idx);
 		};
 
 		$scope.remove = function(idx){
-			console.log(idx)
 			User.remove({name: $scope.users[idx].Name}, function(data){
 				$scope.selected = null;
 				$scope.list();
