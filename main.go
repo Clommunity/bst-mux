@@ -159,6 +159,9 @@ func checkHash(hash string, passwd string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(passwd))
 	return err == nil
 }
+func handlelog(w http.ResponseWriter, r *http.Request) {
+	log.Printf("%s %s %s %d", r.RemoteAddr, r.Method, r.URL, 200)
+}
 
 func main() {
 
@@ -237,7 +240,7 @@ func main() {
 }
 
 func SimplePage(w http.ResponseWriter, req *http.Request, template string) {
-
+	handlelog(w, req)
 	r := render.New(render.Options{Delims: render.Delims{"{{{", "}}}"}})
 	r.HTML(w, http.StatusOK, template, nil)
 
@@ -250,7 +253,7 @@ func SimpleAuthenticatedPage(w http.ResponseWriter, req *http.Request, template 
 	if checkAuth == true && (user == "" || group > grp) {
 		http.Redirect(w, req, "/login", 301)
 	}
-
+	handlelog(w, req)
 	r := render.New(render.Options{Delims: render.Delims{"{{{", "}}}"}})
 	r.HTML(w, http.StatusOK, template, nil)
 
@@ -264,6 +267,7 @@ func SimpleAuthenticatedJSON(w http.ResponseWriter, req *http.Request, f func(ht
 	if checkAuth == true && (user == "" || group > grp) {
 		r.JSON(w, http.StatusUnauthorized, map[string]string{"result": "Unauthorized User"})
 	} else {
+		handlelog(w, req)
 		var dat interface{}
 		j := f(w, req)
 		if err := json.Unmarshal(j, &dat); err != nil {

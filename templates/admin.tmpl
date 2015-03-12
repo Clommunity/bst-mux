@@ -20,8 +20,8 @@
 			<div class="col-sm-3 well">
 				<h3>Users</h3>
 				<ul class="nav nav-pills nav-stacked">
-					<li ng-class="{active: b.name == selected.name}" ng-repeat="b in users">
-						<a href="" ng-click="get($index)">{{b.name}}</a>
+					<li ng-class="{active: u.name == selected.name}" ng-repeat="u in users">
+						<a href="" ng-click="get($index)">{{u.name}}</a>
 					</li>
 				</ul>
 			</div>
@@ -55,6 +55,8 @@
 		$scope.list = function(idx){
 			User.query(function(data){
 				$scope.users = data;
+				console.log(data)
+				console.log(idx)
 				if(idx != undefined) {
 					$scope.selected = $scope.users[idx];
 					$scope.selected.idx = idx;
