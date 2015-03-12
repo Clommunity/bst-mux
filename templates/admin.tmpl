@@ -10,6 +10,9 @@
 <script src="http://code.angularjs.org/1.2.10/angular.min.js"></script>
 <body ng-controller="MainCtl">
 	<div class="jumbotron">
+		<a href="/logout">
+		<button class="btn pull-right">Logout</button>
+		</a>
 		<button class="btn btn-primary pull-right" ng-click="add()">
 			<i class="fa fa-plus"></i> Add user
 		</button>
@@ -20,16 +23,36 @@
 			<div class="col-sm-3 well">
 				<h3>Users</h3>
 				<ul class="nav nav-pills nav-stacked">
-					<li ng-class="{active: u.name == selected.name}" ng-repeat="u in users">
-						<a href="" ng-click="get($index)">{{u.name}}</a>
+					<li ng-class="{active: u.Name == selected.Name}" ng-repeat="u in users">
+						<a href="" ng-click="get($index)">{{u.Name}}</a>
 					</li>
 				</ul>
 			</div>
 			<div class="col-sm-6" ng-show="selected">
-				<h2>{{selected.name}}</h2>
+				<h2>{{selected.Name}}</h2>
 				<dl class="dl-horizontal">
 					<dt>Email:</dt>
-					<dd>{{selected.email}}</dd>
+					<dd>{{selected.Email}}</dd>
+				</dl>
+				<dl class="dl-horizontal">
+					<dt>HomePath:</dt>
+					<dd>{{selected.HomePath}}</dd>
+				</dl>
+				<dl class="dl-horizontal">
+					<dt>GUI Port:</dt>
+					<dd>{{selected.GuiPort}}</dd>
+				</dl>
+				<dl class="dl-horizontal">
+					<dt>Listen Port:</dt>
+					<dd>{{selected.ListenPort}}</dd>
+				</dl>
+				<dl class="dl-horizontal">
+					<dt>Group:</dt>
+					<dd>{{selected.Group}}</dd>
+				</dl>
+				<dl class="dl-horizontal">
+					<dt>Status:</dt>
+					<dd>{{selected.Status}}</dd>
 				</dl>
 			</div>
 			<div class="col-sm-3" ng-show="selected">
@@ -48,15 +71,14 @@
 
 	myapp.controller("MainCtl", ["$scope", "$resource", function($scope, $resource){
 
-		var User = $resource("/admin/user/:id", {id: '@id'}, {});
+		var User = $resource("/admin/user/:name", {name: '@name'}, {});
 
 		$scope.selected = null;
 
 		$scope.list = function(idx){
 			User.query(function(data){
-				$scope.users = data;
 				console.log(data)
-				console.log(idx)
+				$scope.users = data;
 				if(idx != undefined) {
 					$scope.selected = $scope.users[idx];
 					$scope.selected.idx = idx;
@@ -69,7 +91,7 @@
 		$scope.list();
 
 		$scope.get = function(idx){
-			User.get({id: $scope.users[idx].id}, function(data){
+			User.get({name: $scope.users[idx].Name}, function(data){
 				$scope.selected = data;
 				$scope.selected.idx = idx;
 			});

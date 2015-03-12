@@ -33,7 +33,7 @@ const originconfigxml = "/home/syncthing/config.xml"
 const gnull = 0
 const guser = 1
 const gadmin = 100
-const checkAuth = false
+const checkAuth = true
 
 type User struct {
 	Id         int64 `db:"user_id"`
@@ -162,15 +162,20 @@ func checkHash(hash string, passwd string) bool {
 func handlelog(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s %s %d", r.RemoteAddr, r.Method, r.URL, 200)
 }
+func programlog(str string) {
+	log.Printf("%s", str)
+}
 
 func main() {
 
+	programlog("Start Programa")
 	defer dbmap.Db.Close()
 
+	programlog("Create Router")
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		SimplePage(w, r, "mainpage")
+		SimpleAuthenticatedHome(w, r)
 	})
 
 	router.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
@@ -191,10 +196,6 @@ func main() {
 
 	router.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
 		Logout(w, r)
-	})
-
-	router.HandleFunc("/home", func(w http.ResponseWriter, r *http.Request) {
-		SimpleAuthenticatedPage(w, r, "home", guser)
 	})
 
 	router.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
@@ -229,12 +230,9 @@ func main() {
 		SimpleAuthenticatedJSON(w, r, UserDelete, gadmin)
 	}).Methods("DELETE")
 
-	router.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
-		SimpleAuthenticatedPage(w, r, "admin", gadmin)
-	}).Methods("GET")
-
 	router.Handle("/static/{rest}", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
+	programlog("Create Server in port " + port)
 	http.ListenAndServe(port, router)
 
 }
@@ -244,6 +242,23 @@ func SimplePage(w http.ResponseWriter, req *http.Request, template string) {
 	r := render.New(render.Options{Delims: render.Delims{"{{{", "}}}"}})
 	r.HTML(w, http.StatusOK, template, nil)
 
+}
+func SimpleAuthenticatedHome(w http.ResponseWriter, req *http.Request) {
+	_, _, grp := GetSessionUserName(req)
+	var tmpl string
+	var fgroup int
+
+	fgroup = gadmin
+	switch grp {
+	case gadmin:
+		fgroup = gadmin
+		tmpl = "admin"
+	case guser:
+		fgroup = guser
+		tmpl = "home"
+	}
+
+	SimpleAuthenticatedPage(w, req, tmpl, fgroup)
 }
 
 func SimpleAuthenticatedPage(w http.ResponseWriter, req *http.Request, template string, group int) {
@@ -287,10 +302,10 @@ func LoginPost(w http.ResponseWriter, req *http.Request) {
 
 	if checkHash(user.Password, password) && user.Status != "blocked" {
 		SetSession(username, password, user.Group, w)
-		http.Redirect(w, req, "/home", 302)
-	} else {
-		http.Redirect(w, req, "/login", 301)
 	}
+
+	http.Redirect(w, req, "/", 302)
+
 }
 
 func SignupPost(w http.ResponseWriter, req *http.Request) {
@@ -505,8 +520,7 @@ func StopDocker(w http.ResponseWriter, req *http.Request) []byte {
 }
 
 func runDocker(parameters []string) []byte {
-	fmt.Printf(dockercmd, parameters)
-	fmt.Println("")
+	log.Println(dockercmd, parameters)
 	out, err := exec.Command(dockercmd, parameters...).Output()
 	if err != nil {
 		fmt.Println("error occured")
