@@ -33,7 +33,7 @@ const originconfigxml = "/home/syncthing/config.xml"
 const gnull = 0
 const guser = 1
 const gadmin = 100
-const checkAuth = true
+const checkAuth = false
 
 type User struct {
 	Id         int64 `db:"user_id"`
@@ -70,13 +70,34 @@ func createUser(name, password string, email string, guiport, listenport int, ho
 		}
 		err := dbmap.Insert(&user)
 		checkErr(err, "Insert failed")
+		handlelog("Create user ['", user.Name, " ':", user.Group, "]")
 		return true
 	} else {
-		log.Println("User exist!")
+		handlelog("User exist!")
 		return false
 	}
 }
-
+func updateUser(u User) bool {
+	if existUserName(u.Name) && u.Id != 0 {
+		u.Password = hash(u.Password)
+		_, err := dbmap.Update(&u)
+		checkErr(err, "Update failed")
+		return true
+	} else {
+		log.Println("User not exist!")
+		return false
+	}
+}
+func (u *User) Remove() bool {
+	if existUserName(u.Name) && u.Id != 0 {
+		_, err := dbmap.Delete(&u)
+		checkErr(err, "Delete failed")
+		return true
+	} else {
+		log.Println("User not exist!")
+		return false
+	}
+}
 func getUserId(user_id int) User {
 	user := User{}
 	err := dbmap.SelectOne(&user, "select * from users where user_id=?", user_id)
@@ -325,7 +346,7 @@ func SignupPost(w http.ResponseWriter, req *http.Request) {
 		group = gadmin
 		status = ""
 	}
-	if createUser(username, password, email, GetPort(), GetPort(), hostsyncthingpath+username, group, status) {
+	if !createUser(username, password, email, GetPort(), GetPort(), hostsyncthingpath+username, group, status) {
 		log.Print("Problem create User")
 	}
 
@@ -390,12 +411,20 @@ func UsersList(w http.ResponseWriter, req *http.Request) []byte {
 }
 
 func UserAdd(w http.ResponseWriter, req *http.Request) []byte {
-	// TODO
-	payload, _ := parseUserRequest(req)
-	fmt.Println("add: ", payload)
-	// Get payload and fill empty fields...
-	// Execute add
-	return []byte(`{}`)
+	postUser, _ := parseUserRequest(req)
+	if postUser.GuiPort == 0 {
+		postUser.GuiPort = GetPort()
+	}
+	if postUser.ListenPort == 0 {
+		postUser.ListenPort = GetPort()
+	}
+	if postUser.Group == 0 {
+		postUser.Group = guser
+	}
+	if !createUser(postUser.Name, postUser.Password, postUser.Email, postUser.GuiPort, postUser.ListenPort, hostsyncthingpath+postUser.Name, postUser.Group, postUser.Status) {
+		log.Print("Problem create User")
+	}
+	return []byte(`{"result": "OK"}`)
 }
 
 func UserRead(w http.ResponseWriter, req *http.Request) []byte {
@@ -412,21 +441,20 @@ func UserRead(w http.ResponseWriter, req *http.Request) []byte {
 }
 
 func UserUpdate(w http.ResponseWriter, req *http.Request) []byte {
-	// TODO
 	vars := mux.Vars(req)
 	name := vars["name"]
 
 	user := getUserName(name)
-	payload, _ := parseUserRequest(req)
+	postUser, _ := parseUserRequest(req)
 	fmt.Println("user: ", user)
-	fmt.Println("update: ", payload)
+	fmt.Println("update: ", postUser)
 	// Get user, and compare to payload...
 	// Execute update!
-	return []byte(`{}`)
+	updateUser(postUser)
+	return []byte(`{"result":"OK"}`)
 }
 
 func UserDelete(w http.ResponseWriter, req *http.Request) []byte {
-	// TODO
 	vars := mux.Vars(req)
 	name := vars["name"]
 
@@ -543,11 +571,6 @@ func (user *User) PrepareDocker() bool {
 	return true
 }
 func (user *User) CleanDocker() bool {
-	// Remove user.HomePath
-	return true
-}
-
-func (user *User) Remove() bool {
 	// Remove user.HomePath
 	return true
 }

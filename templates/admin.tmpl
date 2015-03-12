@@ -64,6 +64,40 @@
 				</button>
 			</div>
 		</div>
+		<div class="modal hide fade" id="editModal" role='dialog'>
+			<div class='modal-header'>
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+				<h3 ng-hide='newUser'>Edit User: {{selected.Name}}</h3>
+				<h3 ng-show='newUser'>New User</h3>
+			</div>
+			<form>
+				<fieldset>
+					<div class='modal-body'>
+						<label>Name</label>
+						<input type='text' ng-model="selected.Name"/>
+						<label>Email</label>
+						<input type='text' ng-model="selected.Email"/>
+						<label>GUI Port</label>
+						<input type='text' ng-model="selected.Guiport"/>
+						<label>Listen Port</label>
+						<input type='text' ng-model="selected.Listenport"/>
+						<label>Group</label>
+						<input type='text' ng-model="selected.Group"/>
+						<label>Status</label>
+						<input type='text' ng-model="selected.Status"/>
+						<label>Options</label>
+						<div ng-repeat="vo in selected.voteoptions">
+							<input type='text' ng-model="vo.name"/>
+							<i class="icon-trash" ng-click='removeVoteOption(vo)'></i>
+						</div>
+					</div>
+					<div class='modal-footer'>
+						<button type='submit' class="btn btn-danger" data-dismiss="modal" ng-click="delete()">Delete</button>
+						<button type='submit' class="btn btn-primary" data-dismiss="modal" ng-click="save()">Save</button>
+					</div>
+				</fieldset>
+			</form>		
+		</div>
 	</div>
 <script src="http://code.angularjs.org/1.2.10/angular-resource.min.js"></script>
 <script>
