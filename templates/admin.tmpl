@@ -7,13 +7,13 @@
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.1.0/flatly/bootstrap.min.css">
 	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
 </head>
-<script src="http://code.angularjs.org/1.2.10/angular.min.js"></script>
-<script src="http://code.angularjs.org/1.2.10/angular-resource.min.js"></script>
-<script src="http://code.angularjs.org/1.2.10/angular-route.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.4/angular.js"></script>
+    <script src="http://code.angularjs.org/1.2.4/angular-route.js"></script>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/restangular/1.4.0/restangular.min.js"></script>
 
 <body>
-	<div ng-app="project">
+	<div ng-app="user">
 		<div class="jumbotron">
 			<a href="/logout">
 			<button class="btn pull-right">Logout</button>
@@ -34,43 +34,45 @@
 			<div class="col-sm-3 well">
 				<h3>Users</h3>
 				<ul class="nav nav-pills nav-stacked">
-					<li ng-class="{active: u.Name == selected.Name}" ng-repeat="u in users">
-						<a href="" ng-click="get($index)">{{u.Name}}</a>
+					<li ng-class="" ng-repeat="user in users">
+						<a href="" ng-click="get($index)">{{user.Name}}</a>
 					</li>
 				</ul>
 			</div>
-			<div class="col-sm-6">
-				<h2>{{selected.Name}}</h2>
+			<div class="col-sm-6" ng-show="user._id.$oid">
+				<h2>{{user.Name}}</h2>
 				<dl class="dl-horizontal">
 					<dt>Email:</dt>
-					<dd>{{selected.Email}}</dd>
+					<dd>{{user.Email}}</dd>
 				</dl>
 				<dl class="dl-horizontal">
 					<dt>HomePath:</dt>
-					<dd>{{selected.HomePath}}</dd>
+					<dd>{{user.HomePath}}</dd>
 				</dl>
 				<dl class="dl-horizontal">
 					<dt>GUI Port:</dt>
-					<dd>{{selected.GuiPort}}</dd>
+					<dd>{{user.GuiPort}}</dd>
 				</dl>
 				<dl class="dl-horizontal">
 					<dt>Listen Port:</dt>
-					<dd>{{selected.ListenPort}}</dd>
+					<dd>{{user.ListenPort}}</dd>
 				</dl>
 				<dl class="dl-horizontal">
 					<dt>Group:</dt>
-					<dd>{{selected.Group}}</dd>
+					<dd>{{user.Group}}</dd>
 				</dl>
 				<dl class="dl-horizontal">
 					<dt>Status:</dt>
-					<dd>{{selected.Status}}</dd>
+					<dd>{{user.Status}}</dd>
 				</dl>
 			</div>
 			<div class="col-sm-3">
-				<button class="btn btn-primary form-control" ng-click="update(selected.idx)">
+				<a href="#/edit/{{user._id.$oid}}">
+				<button class="btn btn-primary form-control">
 					<i class="fa fa-pencil"></i> Update this User
 				</button>
-				<button class="btn btn-danger form-control" ng-click="remove(selected.idx)">
+				</a>
+				<button class="btn btn-danger form-control">
 					<i class="fa fa-trash-o"></i> Remove this User
 				</button>
 			</div>
@@ -84,29 +86,27 @@
 			<div class="col-sm-3 well">
 			</div>				
 			<div class="col-sm-6 ng-hide">
-				<form>
+				<form name="myForm">
 					<fieldset>
-						<div class='modal-body'>
+						<div class='control-group' ng-class="{error: myForm.name.$invalid}">
 							<label>Name</label>
-							<input type='text' ng-model="selected.Name"/>
+							<input type='text' name="Name" ng-model="user.Name" required/>
+          					<span ng-show="myForm.Name.$error.required" class="help-inline">Required</span>
 							<label>Email</label>
-							<input type='text' ng-model="selected.Email"/>
+							<input type='text' name="Email" ng-model="user.Email"/>
 							<label>GUI Port</label>
-							<input type='text' ng-model="selected.Guiport"/>
+							<input type='text' name="Guiport" ng-model="user.Guiport" required/>
+          					<span ng-show="myForm.Guiport.$error.required" class="help-inline">Required</span>
 							<label>Listen Port</label>
-							<input type='text' ng-model="selected.Listenport"/>
+							<input type='text' name="Listenport" ng-model="user.Listenport" required/>
+							<span ng-show="myForm.Listenport.$error.required" class="help-inline">Required</span>
 							<label>Group</label>
-							<input type='text' ng-model="selected.Group"/>
+							<input type='text' name="Group" ng-model="user.Group"/>
 							<label>Status</label>
-							<input type='text' ng-model="selected.Status"/>
-							<label>Options</label>
-							<div ng-repeat="vo in selected.voteoptions">
-								<input type='text' ng-model="vo.name"/>
-								<i class="icon-trash" ng-click='removeVoteOption(vo)'></i>
-							</div>
+							<input type='text' name="Status" ng-model="user.Status"/>
 						</div>
 						<div class='modal-footer'>
-							<button type='submit' class="btn btn-danger" data-dismiss="modal" ng-click="delete()">Delete</button>
+							<button type='submit' class="btn btn-danger" data-dismiss="modal" ng-click="destroy()">Delete</button>
 							<button type='submit' class="btn btn-primary" data-dismiss="modal" ng-click="save()">Save</button>
 						</div>
 					</fieldset>
@@ -119,8 +119,8 @@
 	</script>
 
 <script>
-angular.module('user', ['restangular', 'ngRoute']).
-  config(function($routeProvider, RestangularProvider) {
+var app = angular.module('user', ['restangular', 'ngRoute'])
+  app.config(function($routeProvider, RestangularProvider) {
     $routeProvider.
       when('/', {
         controller:ListCtrl, 
@@ -155,25 +155,25 @@ angular.module('user', ['restangular', 'ngRoute']).
 
 
 function ListCtrl($scope, Restangular) {
-   $scope.users = Restangular.all("users").getList().$object;
+   $scope.users = Restangular.all("user").getList().$object;
 }
 
 
 function CreateCtrl($scope, $location, Restangular) {
   $scope.save = function() {
-    Restangular.all('projects').post($scope.project).then(function(project) {
+    Restangular.all('users').post($scope.user).then(function(user) {
       $location.path('/list');
     });
   }
 }
 
-function EditCtrl($scope, $location, Restangular, project) {
-  var original = project;
-  $scope.project = Restangular.copy(original);
+function EditCtrl($scope, $location, Restangular, user) {
+  var original = user;
+  $scope.user = Restangular.copy(original);
   
 
   $scope.isClean = function() {
-    return angular.equals(original, $scope.project);
+    return angular.equals(original, $scope.user);
   }
 
   $scope.destroy = function() {
