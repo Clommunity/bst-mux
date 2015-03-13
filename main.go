@@ -273,6 +273,10 @@ func SimpleAuthenticatedHome(w http.ResponseWriter, req *http.Request) {
 	var tmpl string
 	var fgroup int
 
+	if grp == 0 {
+		http.Redirect(w, req, "/login", 301)
+	}
+
 	fgroup = gadmin
 	switch grp {
 	case gadmin:
