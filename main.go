@@ -79,7 +79,13 @@ func createUser(name, password string, email string, guiport, listenport int, ho
 }
 func updateUser(u User) bool {
 	if existUserName(u.Name) && u.Id != 0 {
-		u.Password = hash(u.Password)
+		userOld := getUserName(u.Name)
+		if u.Password == "" {
+			u.Password = userOld.Password
+		} else {
+			u.Password = hash(u.Password)
+			// S'ha de modificar el fitxer XML tb!!!
+		}
 		_, err := dbmap.Update(&u)
 		checkErr(err, "Update failed")
 		return true
@@ -141,7 +147,6 @@ func parseUserRequest(r *http.Request) (User, error) {
 	if e != nil {
 		return User{}, e
 	}
-
 	var payload User
 	e = json.Unmarshal(data, &payload)
 	if e != nil {
@@ -247,9 +252,9 @@ func main() {
 		SimpleAuthenticatedJSON(w, r, UserRead, gadmin)
 	}).Methods("GET")
 
-	router.HandleFunc("/admin/user/{name}", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/admin/user", func(w http.ResponseWriter, r *http.Request) {
 		SimpleAuthenticatedJSON(w, r, UserUpdate, gadmin)
-	}).Methods("POST")
+	}).Methods("PUT")
 
 	router.HandleFunc("/admin/user/{name}", func(w http.ResponseWriter, r *http.Request) {
 		SimpleAuthenticatedJSON(w, r, UserDelete, gadmin)
@@ -420,6 +425,7 @@ func UsersList(w http.ResponseWriter, req *http.Request) []byte {
 
 func UserAdd(w http.ResponseWriter, req *http.Request) []byte {
 	postUser, _ := parseUserRequest(req)
+	log.Println(postUser)
 	if postUser.GuiPort == 0 {
 		postUser.GuiPort = GetPort()
 	}
@@ -429,8 +435,11 @@ func UserAdd(w http.ResponseWriter, req *http.Request) []byte {
 	if postUser.Group == 0 {
 		postUser.Group = guser
 	}
-	if !createUser(postUser.Name, postUser.Password, postUser.Email, postUser.GuiPort, postUser.ListenPort, hostsyncthingpath+postUser.Name, postUser.Group, postUser.Status) {
-		log.Print("Problem create User")
+	log.Println(postUser)
+	if postUser.Name != "" {
+		if !createUser(postUser.Name, postUser.Password, postUser.Email, postUser.GuiPort, postUser.ListenPort, hostsyncthingpath+postUser.Name, postUser.Group, postUser.Status) {
+			log.Print("Problem create User")
+		}
 	}
 	return []byte(`{"result": "OK"}`)
 }
@@ -449,13 +458,8 @@ func UserRead(w http.ResponseWriter, req *http.Request) []byte {
 }
 
 func UserUpdate(w http.ResponseWriter, req *http.Request) []byte {
-	vars := mux.Vars(req)
-	name := vars["name"]
-
-	user := getUserName(name)
 	postUser, _ := parseUserRequest(req)
-	fmt.Println("user: ", user)
-	fmt.Println("update: ", postUser)
+	//	fmt.Println("update: ", postUser)
 	// Get user, and compare to payload...
 	// Execute update!
 	updateUser(postUser)

@@ -10,7 +10,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.4/angular.js"></script>
     <script src="http://code.angularjs.org/1.2.4/angular-route.js"></script>
     <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/restangular/1.4.0/restangular.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/restangular/1.4.0/restangular.min.js"></script>
 
 <body>
 	<div ng-app="user">
@@ -35,12 +35,11 @@
 				<h3>Users</h3>
 				<ul class="nav nav-pills nav-stacked">
 					<li ng-class="" ng-repeat="user in users">
-						<a href="" ng-click="get($index)">{{user.Name}}</a>
+						<a href="#/view/{{user.Name}}" ng-click="get($index)">{{user.Name}}</a>
 					</li>
 				</ul>
 			</div>
-			<script>console.log(user)</script>
-			<div class="col-sm-6" ng-show="user._id.$oid">
+			<div class="col-sm-6" ng-show="user">
 				<h2>{{user.Name}}</h2>
 				<dl class="dl-horizontal">
 					<dt>Email:</dt>
@@ -67,48 +66,73 @@
 					<dd>{{user.Status}}</dd>
 				</dl>
 			</div>
-			<div class="col-sm-3">
-				<a href="#/edit/{{user._id.$oid}}">
+			<div class="col-sm-3" ng-show="user">
+				<a href="#/edit/{{user.Name}}">
 				<button class="btn btn-primary form-control">
 					<i class="fa fa-pencil"></i> Update this User
 				</button>
 				</a>
-				<button class="btn btn-danger form-control">
-					<i class="fa fa-trash-o"></i> Remove this User
-				</button>
 			</div>
 		</div>
 	</div>
 	</script>
-
+	
 	<script type="text/ng-template" id="detail.html">
 	<div class="container-fluid">
 		<div class="row">
-			<div class="col-sm-3 well">
-			</div>				
-			<div class="col-sm-6 ng-hide">
-				<form name="myForm">
+			<div class="col-sm-9">
+				<form name="myForm" class="form-horizontal">
 					<fieldset>
+					<legend>User</legend>
 						<div class='control-group' ng-class="{error: myForm.name.$invalid}">
-							<label>Name</label>
-							<input type='text' name="Name" ng-model="user.Name" required/>
-          					<span ng-show="myForm.Name.$error.required" class="help-inline">Required</span>
-							<label>Email</label>
-							<input type='text' name="Email" ng-model="user.Email"/>
-							<label>GUI Port</label>
-							<input type='text' name="Guiport" ng-model="user.Guiport" required/>
-          					<span ng-show="myForm.Guiport.$error.required" class="help-inline">Required</span>
-							<label>Listen Port</label>
-							<input type='text' name="Listenport" ng-model="user.Listenport" required/>
-							<span ng-show="myForm.Listenport.$error.required" class="help-inline">Required</span>
-							<label>Group</label>
-							<input type='text' name="Group" ng-model="user.Group"/>
-							<label>Status</label>
-							<input type='text' name="Status" ng-model="user.Status"/>
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">Name</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='text' name="Name" ng-model="user.Name" required/>
+									<span ng-show="myForm.Name.$error.required" class="help-inline">Required</span>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">Change Password</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='password' name="NewPassword" ng-model="NewPassword"/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">Email</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='text' name="Email" ng-model="user.Email"/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">GUI Port</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='text' name="Guiport" ng-model="user.GuiPort"/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">Listen Port</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='text' name="Listenport" ng-model="user.ListenPort"/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">Group</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='text' name="Group" ng-model="user.Group"/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">Status</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='text' name="Status" ng-model="user.Status"/>
+								</div>
+							</div>
 						</div>
 						<div class='modal-footer'>
-							<button type='submit' class="btn btn-danger" data-dismiss="modal" ng-click="destroy()">Delete</button>
-							<button type='submit' class="btn btn-primary" data-dismiss="modal" ng-click="save()">Save</button>
+							<button type='submit' class="btn btn-danger" ng-click="destroy()">Delete</button>
+							<button type='submit' class="btn btn-primary" ng-click="save()">Save</button>
+							<button type='submit' class="btn btn-primary" ng-click="cancel()">Cancel</button>
 						</div>
 					</fieldset>
 				</form>		
@@ -122,28 +146,39 @@
 <script>
 var app = angular.module('user', ['restangular', 'ngRoute'])
   app.config(function($routeProvider, RestangularProvider) {
-    $routeProvider.
-      when('/', {
-        controller:ListCtrl, 
-        templateUrl:'list.html'
-      }).
-      when('/edit/:projectId', {
-        controller:EditCtrl, 
-        templateUrl:'detail.html',
-        resolve: {
-          user: function(Restangular, $route){
-            return Restangular.one('users', $route.current.params.userId).get();
-          }
-        }
-      }).
-      when('/new', {controller:CreateCtrl, templateUrl:'detail.html'}).
-      otherwise({redirectTo:'/'});
+    $routeProvider
+		.when('/', {
+		  controller:ListCtrl, 
+		  templateUrl:'list.html'
+		})
+		.when('/new', {
+			controller:CreateCtrl, templateUrl:'detail.html'
+		})
+		.when('/edit/:userId', {
+		  controller:EditCtrl, 
+		  templateUrl:'detail.html',
+		  resolve: {
+		    user: function(Restangular, $route){
+		      return Restangular.one('user', $route.current.params.userId).get();
+		    }
+		  }
+		})
+		.when('/view/:userId', {
+		  controller:ViewCtrl, 
+		  templateUrl:'list.html',
+		  resolve: {
+		    user: function(Restangular, $route){
+		      return Restangular.one('user', $route.current.params.userId).get();
+		    }
+		  }
+		})
+		.otherwise({redirectTo:'/'});
       
       RestangularProvider.setBaseUrl('/admin');
       RestangularProvider.setRestangularFields({
         id: '_id.$oid'
       });
-      
+        
       RestangularProvider.setRequestInterceptor(function(elem, operation, what) {
         
         if (operation === 'put') {
@@ -154,15 +189,29 @@ var app = angular.module('user', ['restangular', 'ngRoute'])
       })
   });
 
+function formatUser(user){
+	if (!user.id) { user.id = 0 }
+	if (!user.HomePath) { user.HomePath = "" }
+	if (!user.Status) { user.Status = "" }
+	if (!user.Password) { user.Passowrd = "" }
+	if (!user.Email) { user.Email = "" }
+	if (!user.GuiPort) { user.GuiPort = 0 }
+	if (!user.ListenPort) { user.ListenPort = 0 }
+	if (!user.Create) { user.Create = 0 }
+	
+	return (user) 
+}
 
 function ListCtrl($scope, Restangular) {
    $scope.users = Restangular.all("user").getList().$object;
 }
 
-
 function CreateCtrl($scope, $location, Restangular) {
   $scope.save = function() {
-    Restangular.all('users').post($scope.user).then(function(user) {
+	$scope.user.Password = $scope.myForm.NewPassword.$viewValue
+	console.log(formatUser($scope.user))
+	console.log($scope.user)
+    Restangular.all('user').post($scope.user).then(function(user) {
       $location.path('/list');
     });
   }
@@ -184,11 +233,25 @@ function EditCtrl($scope, $location, Restangular, user) {
   };
 
   $scope.save = function() {
-    $scope.project.put().then(function() {
+	$scope.user.Password = $scope.myForm.NewPassword.$viewValue
+    $scope.user.put().then(function() {
       $location.path('/');
     });
   };
+
+  $scope.cancel = function() {
+	console.log(user)
+	$location.path('/view/'+user.Name);
+  };
 }
+
+function ViewCtrl($scope, $location, Restangular, user) {
+  $scope.users = Restangular.all("user").getList().$object;
+  var original = user;
+  $scope.user = Restangular.copy(original);
+  
+}
+
 </script>
 </body>
 </html>
