@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -84,7 +85,7 @@ func updateUser(u User) bool {
 			u.Password = userOld.Password
 		} else {
 			u.Password = hash(u.Password)
-			// S'ha de modificar el fitxer XML tb!!!
+			UpdatePaswordInConfigXML(u.Name, u.Password)
 		}
 		_, err := dbmap.Update(&u)
 		checkErr(err, "Update failed")
@@ -150,6 +151,7 @@ func parseUserRequest(r *http.Request) (User, error) {
 	var payload User
 	e = json.Unmarshal(data, &payload)
 	if e != nil {
+		fmt.Println(e)
 		return User{}, e
 	}
 
@@ -425,7 +427,6 @@ func UsersList(w http.ResponseWriter, req *http.Request) []byte {
 
 func UserAdd(w http.ResponseWriter, req *http.Request) []byte {
 	postUser, _ := parseUserRequest(req)
-	log.Println(postUser)
 	if postUser.GuiPort == 0 {
 		postUser.GuiPort = GetPort()
 	}
@@ -641,6 +642,24 @@ func ReplaceConfigXML(origin, definitive, name, passwd, guiport, listenport stri
 	}
 
 	if err := writeLines(lines, definitive); err != nil {
+		fmt.Println("Error!")
+	}
+	return
+}
+func UpdatePaswordInConfigXML(username, password string) {
+	user := getUserName(username)
+	file := string(user.HomePath + "/config.xml")
+
+	lines, err := readLines(file)
+	if err != nil {
+		fmt.Println("Error!")
+	}
+	re := regexp.MustCompile("<password>.*</password>")
+	for i := range lines {
+		lines[i] = re.ReplaceAllLiteralString(lines[i], "<password>"+password+"</password>")
+	}
+
+	if err := writeLines(lines, file); err != nil {
 		fmt.Println("Error!")
 	}
 	return
