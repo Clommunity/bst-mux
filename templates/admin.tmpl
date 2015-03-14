@@ -72,6 +72,11 @@
 					<i class="fa fa-pencil"></i> Update this User
 				</button>
 				</a>
+				<a href="#/destroy/{{user.Name}}">
+				<button class="btn btn-danger form-control">
+					<i class="fa fa-trash-o"></i> Delete this User
+				</button>
+				</a>
 			</div>
 		</div>
 	</div>
@@ -107,30 +112,33 @@
 							<div class="form-group">
 								<label class="col-lg-2 control-label" for="textinput">GUI Port</label>
 								<div class="col-lg-10">
-									<input class="form-control" type='text' name="Guiport" ng-model="user.GuiPort"/>
+									<input class="form-control" type='number' name="Guiport" ng-model="user.GuiPort"/>
+									<span class="error" ng-show="myForm.input.$error.number">Is NOT a number!</span>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-lg-2 control-label" for="textinput">Listen Port</label>
 								<div class="col-lg-10">
-									<input class="form-control" type='text' name="Listenport" ng-model="user.ListenPort"/>
+									<input class="form-control" type='number' name="Listenport" ng-model="user.ListenPort"/>
+									<span class="error" ng-show="myForm.input.$error.number">Is NOT a number!</span>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-lg-2 control-label" for="textinput">Group</label>
 								<div class="col-lg-10">
 									<input class="form-control" type='text' name="Group" ng-model="user.Group"/>
+									<span class="error" ng-show="myForm.input.$error.number">Is NOT a number!</span>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-lg-2 control-label" for="textinput">Status</label>
 								<div class="col-lg-10">
-									<input class="form-control" type='text' name="Status" ng-model="user.Status"/>
+									<input class="form-control" type='number' name="Status" ng-model="user.Status"/>
+									<span class="error" ng-show="myForm.input.$error.number">Is NOT a number!</span>
 								</div>
 							</div>
 						</div>
-						<div class='modal-footer'>
-							<button type='submit' class="btn btn-danger" ng-click="destroy()">Delete</button>
+						<div>
 							<button type='submit' class="btn btn-primary" ng-click="save()">Save</button>
 							<button type='submit' class="btn btn-primary" ng-click="cancel()">Cancel</button>
 						</div>
@@ -172,11 +180,20 @@ var app = angular.module('user', ['restangular', 'ngRoute'])
 		    }
 		  }
 		})
+		.when('/destroy/:userId', {
+		  controller:RemoveCtrl, 
+		  templateUrl:'list.html',
+		  resolve: {
+		    user: function(Restangular, $route){
+		      return Restangular.one('user', $route.current.params.userId).get();
+		    }
+		  }
+		})			
 		.otherwise({redirectTo:'/'});
       
       RestangularProvider.setBaseUrl('/admin');
       RestangularProvider.setRestangularFields({
-        id: '_id.$oid'
+        id: 'Name.$oid'
       });
         
       RestangularProvider.setRequestInterceptor(function(elem, operation, what) {
@@ -190,15 +207,15 @@ var app = angular.module('user', ['restangular', 'ngRoute'])
   });
 
 function formatUser(user){
-	if (!user.id) { user.id = 0 }
+	if (!user.Id) { user.Id = 0 }
 	if (!user.HomePath) { user.HomePath = "" }
 	if (!user.Status) { user.Status = "" }
 	if (!user.Password) { user.Passowrd = "" }
 	if (!user.Email) { user.Email = "" }
-	if (!user.GuiPort) { user.GuiPort = 0 }
-	if (!user.ListenPort) { user.ListenPort = 0 }
-	if (!user.Create) { user.Create = 0 }
-	
+	if (!user.GuiPort) { user.GuiPort = 0 } else { user.GuiPort = parseInt(user.GuiPort)}
+	if (!user.ListenPort) { user.ListenPort = 0 } else { user.ListenPort = parseInt(user.ListenPort)}
+	if (!user.Created) { user.Created = 0 } else { user.Created = parseInt(user.Created)}
+	if (!user.Group) { user.Group = 1 } else { user.Group = parseInt(user.Group)}
 	return (user) 
 }
 
@@ -226,12 +243,6 @@ function EditCtrl($scope, $location, Restangular, user) {
     return angular.equals(original, $scope.user);
   }
 
-  $scope.destroy = function() {
-    original.remove().then(function() {
-      $location.path('/list');
-    });
-  };
-
   $scope.save = function() {
 	$scope.user.Password = $scope.myForm.NewPassword.$viewValue
     $scope.user.put().then(function() {
@@ -250,6 +261,11 @@ function ViewCtrl($scope, $location, Restangular, user) {
   var original = user;
   $scope.user = Restangular.copy(original);
   
+}
+
+function RemoveCtrl($scope, $location, Restangular, user) {
+	Restangular.one('user', user.Name).remove();
+	$location.path('/');
 }
 
 </script>
