@@ -1,6 +1,5 @@
 # bst-mux
 
-
 Multiuser system for SyncThing, using Docker and Go.
 
 ## Dev
@@ -8,32 +7,37 @@ this version use [Gorilla-mux](http://www.gorillatoolkit.org/pkg/mux) to Router 
 
 ## Install
 
- * __Install Docker__: You can follow [Docker web site](https://docs.docker.com/installation/).
+__Install Docker__: You can follow [Docker web site](https://docs.docker.com/installation/).
 
- * __Install bst-mux__: TODO
+__Install bst-mux__: TODO
 
- * __Prepare Docker__: Execute Dockerfile ?
+__Prepare Docker__: Execute Dockerfile ?
 
- * Prepare Directories
+__Prepare Directories__
 ```sh
 	mkdir -p /home/syncthing/real
 ``` 
- * Create synching user
+
+__Create synching user__
 ```sh
 	adduser --home /home/syncthing --uid 22000 -g users --disable-password syncthing
 ```
- * Change permisions
+
+__Change permisions__
 ```sh
 	chown -R 22000 /home/syncthing
 ``` 
- * Copy config.xml default
+
+__Copy config.xml default__
 ```sh
 	cp res/config.xml.orig /home/syncthing/config.xml
 ``` 
- *  Run bst-mux
+
+__Run bst-mux__
 ```sh
 	go run main.go
 ``` 
+
 ## Setup
 
   The first user to registed in system has in admins group, this user can create, update, delete users.
