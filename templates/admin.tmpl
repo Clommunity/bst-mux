@@ -150,6 +150,75 @@
 		</div>
 	</div>
 	</script>
+	
+	<script type="text/ng-template" id="new.html">
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-sm-9">
+				<form name="myForm" class="form-horizontal">
+					<fieldset>
+					<legend>User</legend>
+						<div class='control-group' ng-class="{error: myForm.name.$invalid}">
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">Name</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='text' name="Name" ng-model="user.Name" required/>
+									<span ng-show="myForm.Name.$error.required" class="help-inline">Required</span>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">Password</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='password' name="Password" ng-model="user.Password"/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">Email</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='text' name="Email" ng-model="user.Email"/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">GUI Port</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='number' name="Guiport" ng-model="user.GuiPort"/>
+									<span class="error" ng-show="myForm.input.$error.number">Is NOT a number!</span>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">Listen Port</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='number' name="Listenport" ng-model="user.ListenPort"/>
+									<span class="error" ng-show="myForm.input.$error.number">Is NOT a number!</span>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">Group</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='text' name="Group" ng-model="user.Group"/>
+									<span class="error" ng-show="myForm.input.$error.number">Is NOT a number!</span>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-lg-2 control-label" for="textinput">Status</label>
+								<div class="col-lg-10">
+									<input class="form-control" type='number' name="Status" ng-model="user.Status"/>
+									<span class="error" ng-show="myForm.input.$error.number">Is NOT a number!</span>
+								</div>
+							</div>
+						</div>
+						<div>
+							<button type='submit' class="btn btn-primary" ng-click="save()">Save</button>
+							<button type='submit' class="btn btn-primary" ng-click="cancel()">Cancel</button>
+						</div>
+					</fieldset>
+				</form>		
+			</div>
+			<div class="col-sm-3">
+			</div>
+		</div>
+	</div>
+	</script>
 
 <script>
 var app = angular.module('user', ['restangular', 'ngRoute'])
@@ -160,7 +229,13 @@ var app = angular.module('user', ['restangular', 'ngRoute'])
 		  templateUrl:'list.html'
 		})
 		.when('/new', {
-			controller:CreateCtrl, templateUrl:'detail.html'
+		  controller:CreateCtrl,
+		  templateUrl:'new.html',
+		  resolve: {
+		    user: function(Restangular, $route){
+		      return Restangular.one('user', $route.current.params.userId).get();
+		    }
+		  }
 		})
 		.when('/edit/:userId', {
 		  controller:EditCtrl, 
@@ -224,20 +299,20 @@ function ListCtrl($scope, Restangular) {
 }
 
 function CreateCtrl($scope, $location, Restangular) {
+  $scope.user = formatUser($scope.user)
   $scope.save = function() {
-	$scope.user.Password = $scope.myForm.NewPassword.$viewValue
-	console.log(formatUser($scope.user))
-	console.log($scope.user)
     Restangular.all('user').post($scope.user).then(function(user) {
       $location.path('/list');
     });
   }
+  $scope.cancel = function() {
+	$location.path('/');
+  };
 }
 
 function EditCtrl($scope, $location, Restangular, user) {
   var original = user;
   $scope.user = Restangular.copy(original);
-  
 
   $scope.isClean = function() {
     return angular.equals(original, $scope.user);
@@ -245,13 +320,13 @@ function EditCtrl($scope, $location, Restangular, user) {
 
   $scope.save = function() {
 	$scope.user.Password = $scope.myForm.NewPassword.$viewValue
+	$scope.user = formatUser($scope.user)
     $scope.user.put().then(function() {
       $location.path('/');
     });
   };
 
   $scope.cancel = function() {
-	console.log(user)
 	$location.path('/view/'+user.Name);
   };
 }
