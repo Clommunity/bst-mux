@@ -34,6 +34,7 @@ const originconfigxml = "/home/syncthing/config.xml"
 const gnull = 0
 const guser = 1
 const gadmin = 100
+const postguesthostname = "-bst"
 const checkAuth = false
 
 type User struct {
@@ -541,7 +542,7 @@ func StartDocker(w http.ResponseWriter, req *http.Request) []byte {
 		user.PrepareDocker()
 		strGP := strconv.Itoa(user.GuiPort)
 		strLP := strconv.Itoa(user.ListenPort)
-		dockerParameters = append(dockerParameters, "run", "-d", "--net=host", "-v", user.HomePath+":"+dksyncthingpath, "-p", strGP+":"+strGP, "-p", strLP+":"+strLP, "--name", user.Name, "syncthing")
+		dockerParameters = append(dockerParameters, "run", "-d", "-h", user.Name+postguesthostname, "-v", user.HomePath+":"+dksyncthingpath, "-p", strGP+":"+strGP, "-p", strLP+":"+strLP, "--name", user.Name, "syncthing")
 	}
 
 	out := runDocker(dockerParameters)
