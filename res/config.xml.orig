@@ -1,0 +1,34 @@
+<configuration version="7">
+    <folder id="default" path="/home/syncthing/Sync" ro="false" rescanIntervalS="60" ignorePerms="false">
+        <versioning></versioning>
+        <lenientMtimes>false</lenientMtimes>
+        <copiers>1</copiers>
+        <pullers>16</pullers>
+        <hashers>0</hashers>
+    </folder>
+    <gui enabled="true" tls="true">
+        <address>:{GUI_PORT}</address>
+        <user>{USER}</user>
+        <password>{PASSWORD}</password>
+    </gui>
+    <options>
+        <listenAddress>0.0.0.0:{LISTEN_PORT}</listenAddress>
+        <globalAnnounceEnabled>false</globalAnnounceEnabled>
+        <localAnnounceEnabled>false</localAnnounceEnabled>
+        <maxSendKbps>0</maxSendKbps>
+        <maxRecvKbps>0</maxRecvKbps>
+        <reconnectionIntervalS>60</reconnectionIntervalS>
+        <startBrowser>true</startBrowser>
+        <upnpEnabled>true</upnpEnabled>
+        <upnpLeaseMinutes>0</upnpLeaseMinutes>
+        <upnpRenewalMinutes>30</upnpRenewalMinutes>
+        <urAccepted>-1</urAccepted>
+        <urUniqueID></urUniqueID>
+        <restartOnWakeup>true</restartOnWakeup>
+        <autoUpgradeIntervalH>0</autoUpgradeIntervalH>
+        <keepTemporariesH>24</keepTemporariesH>
+        <cacheIgnoredFiles>true</cacheIgnoredFiles>
+        <progressUpdateIntervalS>5</progressUpdateIntervalS>
+        <symlinksEnabled>true</symlinksEnabled>
+    </options>
+</configuration>
