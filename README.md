@@ -25,7 +25,7 @@ this version use Gorilla-mux ( http://www.gorillatoolkit.org/pkg/mux ) to Router
 
 ** Create synching user
 
-   adduser --home /home/syncthing --uid 22000 --disable-password syncthing
+   adduser --home /home/syncthing --uid 22000 -g users --disable-password syncthing
 
 ** Change permisions
 	chown -R 22000 /home/syncthing
