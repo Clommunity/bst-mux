@@ -41,3 +41,11 @@ __Run bst-mux__
 ## Setup
 
   The first user to registed in system has in admins group, this user can create, update, delete users.
+
+## Debian notes
+
+### Install
+```sh
+apt-get install curl 
+curl -sSL https://get.docker.com/ | sh
+
